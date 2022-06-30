@@ -9,10 +9,9 @@ import (
 
 // Base contains common columns for all tables.
 type Base struct {
-	ID        string         `json:"id" gorm:"primaryKey"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`
+	ID        string    `json:"id" gorm:"primaryKey"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func (b *Base) BeforeCreate(tx *gorm.DB) (err error) {

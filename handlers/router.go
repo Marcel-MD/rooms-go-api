@@ -7,6 +7,7 @@ func InitRouter() *gin.Engine {
 	r := e.Group("/api")
 
 	NewUserHandler().Route(r)
+	NewRoomHandler().Route(r)
 
 	return e
 }

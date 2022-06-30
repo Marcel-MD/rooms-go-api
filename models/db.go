@@ -25,6 +25,8 @@ func InitDB() {
 
 	// Migrate models
 	db.AutoMigrate(&User{})
+	db.AutoMigrate(&Room{})
+	db.AutoMigrate(&Message{})
 
 	database = db
 }

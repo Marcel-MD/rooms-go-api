@@ -84,7 +84,7 @@ func (h *UserHandler) Current(c *gin.Context) {
 
 	user, err := h.Service.FindOne(id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": id})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "record not found"})
 		return
 	}
 

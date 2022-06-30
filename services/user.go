@@ -36,7 +36,7 @@ func (s *UserService) FindAll() []models.User {
 func (s *UserService) FindOne(id string) (models.User, error) {
 	var user models.User
 
-	err := s.DB.First(&user, "id = ?", id).Error
+	err := s.DB.Model(&models.User{}).Preload("Rooms").First(&user, "id = ?", id).Error
 	if err != nil {
 		return user, err
 	}
