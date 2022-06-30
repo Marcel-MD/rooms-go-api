@@ -2,7 +2,8 @@
 
 ## Description
 
-Simple API developed with [Gin](https://gin-gonic.com/) and [GORM](https://gorm.io/index.html).
+Simple API developed with [Gin](https://gin-gonic.com/) and [GORM](https://gorm.io/index.html)./
+Work in progress...
 
 ## Environment Variable
 
