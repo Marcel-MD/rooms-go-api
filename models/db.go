@@ -16,7 +16,7 @@ func GetDB() *gorm.DB {
 
 func InitDB() {
 
-	dsn := "postgres://postgres:password@localhost:5432/messenger"
+	dsn := "postgres://postgres:password@localhost:5432/rooms"
 
 	// Get .env connection url if exists
 	err := godotenv.Load(".env")
