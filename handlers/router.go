@@ -8,6 +8,7 @@ func InitRouter() *gin.Engine {
 
 	NewUserHandler().Route(r)
 	NewRoomHandler().Route(r)
+	NewMessageHandler().Route(r)
 
 	return e
 }
