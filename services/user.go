@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"sync"
 
 	"github.com/Marcel-MD/rooms-go-api/dto"
 	"github.com/Marcel-MD/rooms-go-api/models"
@@ -21,10 +22,16 @@ type UserService struct {
 	DB *gorm.DB
 }
 
-func NewUserService() IUserService {
-	return &UserService{
-		DB: models.GetDB(),
-	}
+var userOnce sync.Once
+var userService IUserService
+
+func GetUserService() IUserService {
+	userOnce.Do(func() {
+		userService = &UserService{
+			DB: models.GetDB(),
+		}
+	})
+	return userService
 }
 
 func (s *UserService) FindAll() []models.User {

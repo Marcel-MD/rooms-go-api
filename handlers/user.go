@@ -20,7 +20,7 @@ type UserHandler struct {
 
 func NewUserHandler() IUserHandler {
 	return &UserHandler{
-		Service: services.NewUserService(),
+		Service: services.GetUserService(),
 	}
 }
 

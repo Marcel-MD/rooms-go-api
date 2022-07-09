@@ -21,7 +21,7 @@ type MessageHandler struct {
 
 func NewMessageHandler() IMessageHandler {
 	return &MessageHandler{
-		Service: services.NewMessageService(),
+		Service: services.GetMessageService(),
 	}
 }
 
@@ -39,11 +39,14 @@ func (h *MessageHandler) Find(c *gin.Context) {
 	roomID := c.Param("room_id")
 	var err error
 	params := dto.MessageQueryParams{}
-	params.Page, err = strconv.Atoi(c.Query("page"))
-	params.Size, err = strconv.Atoi(c.Query("size"))
 
+	params.Page, err = strconv.Atoi(c.Query("page"))
 	if err != nil {
 		params.Page = 1
+	}
+
+	params.Size, err = strconv.Atoi(c.Query("size"))
+	if err != nil {
 		params.Size = 20
 	}
 

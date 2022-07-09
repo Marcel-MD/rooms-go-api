@@ -20,7 +20,7 @@ type RoomHandler struct {
 
 func NewRoomHandler() IRoomHandler {
 	return &RoomHandler{
-		Service: services.NewRoomService(),
+		Service: services.GetRoomService(),
 	}
 }
 

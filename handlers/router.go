@@ -2,13 +2,14 @@ package handlers
 
 import "github.com/gin-gonic/gin"
 
-func InitRouter() *gin.Engine {
+func InitRouter() {
 	e := gin.Default()
 	r := e.Group("/api")
 
 	NewUserHandler().Route(r)
 	NewRoomHandler().Route(r)
 	NewMessageHandler().Route(r)
+	NewWebSocketHandler().Route(r)
 
-	return e
+	e.Run()
 }

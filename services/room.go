@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"sync"
 
 	"github.com/Marcel-MD/rooms-go-api/dto"
 	"github.com/Marcel-MD/rooms-go-api/models"
@@ -22,10 +23,16 @@ type RoomService struct {
 	DB *gorm.DB
 }
 
-func NewRoomService() IRoomService {
-	return &RoomService{
-		DB: models.GetDB(),
-	}
+var roomOnce sync.Once
+var roomService IRoomService
+
+func GetRoomService() IRoomService {
+	roomOnce.Do(func() {
+		roomService = &RoomService{
+			DB: models.GetDB(),
+		}
+	})
+	return roomService
 }
 
 func (s *RoomService) FindAll() []models.Room {
@@ -47,10 +54,13 @@ func (s *RoomService) FindOne(id string) (models.Room, error) {
 
 func (s *RoomService) Create(dto dto.CreateRoom, userID string) (models.Room, error) {
 	var user models.User
-	err := s.DB.First(&user, "id = ?", userID).Error
 
-	var room models.Room
-	room = models.Room{
+	err := s.DB.First(&user, "id = ?", userID).Error
+	if err != nil {
+		return models.Room{}, err
+	}
+
+	room := models.Room{
 		Name:    dto.Name,
 		OwnerID: userID,
 	}
@@ -145,15 +155,15 @@ func (s *RoomService) RemoveUser(id string, email string, userID string) error {
 		return err
 	}
 
-	if room.OwnerID != userID {
-		return errors.New("you are not the owner of this room")
-	}
-
 	var user models.User
 
 	err = s.DB.First(&user, "email = ?", email).Error
 	if err != nil {
 		return err
+	}
+
+	if room.OwnerID != userID && user.ID != id {
+		return errors.New("unauthorized")
 	}
 
 	err = s.DB.Model(&room).Association("Users").Delete(&user)

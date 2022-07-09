@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"sync"
 
 	"github.com/Marcel-MD/rooms-go-api/dto"
 	"github.com/Marcel-MD/rooms-go-api/models"
@@ -13,23 +14,30 @@ type IMessageService interface {
 	Create(dto dto.CreateMessage, roomID string, userID string) (models.Message, error)
 	Update(id string, dto dto.UpdateMessage, userID string) (models.Message, error)
 	Delete(id string, userID string) error
+	VerifyUserInRoom(roomID string, userID string) error
 }
 
 type MessageService struct {
 	DB *gorm.DB
 }
 
-func NewMessageService() IMessageService {
-	return &MessageService{
-		DB: models.GetDB(),
-	}
+var messageOnce sync.Once
+var messageService IMessageService
+
+func GetMessageService() IMessageService {
+	messageOnce.Do(func() {
+		messageService = &MessageService{
+			DB: models.GetDB(),
+		}
+	})
+	return messageService
 }
 
 func (s *MessageService) FindByRoomID(roomID string, userID string, params dto.MessageQueryParams) ([]models.Message, error) {
 
 	var messages []models.Message
 
-	err := s.verifyUserInRoom(roomID, userID)
+	err := s.VerifyUserInRoom(roomID, userID)
 	if err != nil {
 		return messages, err
 	}
@@ -42,7 +50,13 @@ func (s *MessageService) Create(dto dto.CreateMessage, roomID string, userID str
 
 	var message models.Message
 
-	err := s.verifyUserInRoom(roomID, userID)
+	err := s.VerifyUserInRoom(roomID, userID)
+	if err != nil {
+		return message, err
+	}
+
+	var user models.User
+	err = s.DB.First(&user, "id = ?", userID).Error
 	if err != nil {
 		return message, err
 	}
@@ -55,6 +69,8 @@ func (s *MessageService) Create(dto dto.CreateMessage, roomID string, userID str
 	if err != nil {
 		return message, err
 	}
+
+	message.User = user
 
 	return message, nil
 }
@@ -103,7 +119,7 @@ func (s *MessageService) Delete(id string, userID string) error {
 	return nil
 }
 
-func (s *MessageService) verifyUserInRoom(roomID string, userID string) error {
+func (s *MessageService) VerifyUserInRoom(roomID string, userID string) error {
 	var room models.Room
 	err := s.DB.Model(&models.Room{}).Preload("Users").First(&room, "id = ?", roomID).Error
 	if err != nil {

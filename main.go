@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/Marcel-MD/rooms-go-api/handlers"
-	"github.com/Marcel-MD/rooms-go-api/models"
+	"github.com/Marcel-MD/rooms-go-api/websockets"
 	"github.com/joho/godotenv"
 )
 
@@ -14,7 +14,6 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	models.InitDB()
-	r := handlers.InitRouter()
-	r.Run()
+	websockets.InitHub()
+	handlers.InitRouter()
 }

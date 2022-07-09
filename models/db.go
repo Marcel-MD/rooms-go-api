@@ -2,18 +2,23 @@ package models
 
 import (
 	"os"
+	"sync"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
+var once sync.Once
 var database *gorm.DB
 
 func GetDB() *gorm.DB {
+	once.Do(func() {
+		database = initDB()
+	})
 	return database
 }
 
-func InitDB() {
+func initDB() *gorm.DB {
 
 	dsn := os.Getenv("DATABASE_URL")
 
@@ -28,7 +33,7 @@ func InitDB() {
 	db.AutoMigrate(&Room{})
 	db.AutoMigrate(&Message{})
 
-	database = db
+	return db
 }
 
 func Paginate(page int, size int) func(db *gorm.DB) *gorm.DB {
