@@ -1,18 +1,18 @@
 package middleware
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/Marcel-MD/rooms-go-api/token"
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
 )
 
 func JwtAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		err := token.Valid(c)
+		_, err := token.ExtractID(c)
 		if err != nil {
-			log.Println(err)
+			log.Err(err).Msg("Invalid token")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			c.Abort()
 			return

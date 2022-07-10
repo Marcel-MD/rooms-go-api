@@ -5,6 +5,7 @@ import (
 
 	"github.com/Marcel-MD/rooms-go-api/models"
 	"github.com/Marcel-MD/rooms-go-api/services"
+	"github.com/rs/zerolog/log"
 )
 
 // hub maintains the set of active connections and broadcasts messages to the
@@ -22,6 +23,7 @@ var h hub
 
 func InitHub() {
 	once.Do(func() {
+		log.Info().Msg("Initializing websocket hub")
 		h = hub{
 			rooms:      make(map[string]map[*connection]bool),
 			broadcast:  make(chan models.Message),
@@ -34,12 +36,15 @@ func InitHub() {
 }
 
 func (h *hub) run() {
+	log.Info().Msg("Starting websocket hub")
 	for {
 		select {
 
 		case s := <-h.register:
+			log.Debug().Str("user_id", s.userID).Str("room_id", s.roomID).Msg("Register user from room connection")
 			connections := h.rooms[s.roomID]
 			if connections == nil {
+				log.Debug().Str("room_id", s.roomID).Msg("Creating room connection")
 				connections = make(map[*connection]bool)
 				h.rooms[s.roomID] = connections
 			}
@@ -49,23 +54,28 @@ func (h *hub) run() {
 			connections := h.rooms[s.roomID]
 			if connections != nil {
 				if _, ok := connections[s.conn]; ok {
-					delete(connections, s.conn)
+					log.Debug().Str("user_id", s.userID).Str("room_id", s.roomID).Msg("Unregister user from room connection")
 					close(s.conn.send)
+					delete(connections, s.conn)
 					if len(connections) == 0 {
+						log.Debug().Str("room_id", s.roomID).Msg("Deleting room connection")
 						delete(h.rooms, s.roomID)
 					}
 				}
 			}
 
 		case m := <-h.broadcast:
+			log.Debug().Str("room_id", m.RoomID).Str("msg_id", m.ID).Msg("Broadcasting message")
 			connections := h.rooms[m.RoomID]
 			for c := range connections {
 				select {
 				case c.send <- m:
 				default:
+					log.Warn().Str("user_id", m.UserID).Str("room_id", m.RoomID).Msg("Closing user connection")
 					close(c.send)
 					delete(connections, c)
 					if len(connections) == 0 {
+						log.Debug().Str("room_id", m.RoomID).Msg("Deleting room connection")
 						delete(h.rooms, m.RoomID)
 					}
 				}

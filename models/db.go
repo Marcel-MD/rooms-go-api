@@ -4,6 +4,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/rs/zerolog/log"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -19,13 +20,14 @@ func GetDB() *gorm.DB {
 }
 
 func initDB() *gorm.DB {
+	log.Info().Msg("Initializing database")
 
 	dsn := os.Getenv("DATABASE_URL")
 
 	// Open connection
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		panic("failed to connect database")
+		log.Fatal().Err(err).Msg("Failed to connect to database")
 	}
 
 	// Migrate models

@@ -7,6 +7,7 @@ import (
 	"github.com/Marcel-MD/rooms-go-api/dto"
 	"github.com/Marcel-MD/rooms-go-api/models"
 	"github.com/Marcel-MD/rooms-go-api/token"
+	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -27,6 +28,7 @@ var userService IUserService
 
 func GetUserService() IUserService {
 	userOnce.Do(func() {
+		log.Info().Msg("Initializing user service")
 		userService = &UserService{
 			DB: models.GetDB(),
 		}
@@ -35,14 +37,17 @@ func GetUserService() IUserService {
 }
 
 func (s *UserService) FindAll() []models.User {
+	log.Debug().Msg("Finding all users")
+
 	var users []models.User
 	s.DB.Find(&users)
 	return users
 }
 
 func (s *UserService) FindOne(id string) (models.User, error) {
-	var user models.User
+	log.Debug().Str("id", id).Msg("Finding user")
 
+	var user models.User
 	err := s.DB.Model(&models.User{}).Preload("Rooms").First(&user, "id = ?", id).Error
 	if err != nil {
 		return user, err
@@ -52,8 +57,9 @@ func (s *UserService) FindOne(id string) (models.User, error) {
 }
 
 func (s *UserService) Register(dto dto.RegisterUser) (models.User, error) {
-	var user models.User
+	log.Debug().Msg("Registering user")
 
+	var user models.User
 	err := s.DB.First(&user, "email = ?", dto.Email).Error
 	if err == nil {
 		return user, errors.New("user already exists")
@@ -80,8 +86,9 @@ func (s *UserService) Register(dto dto.RegisterUser) (models.User, error) {
 }
 
 func (s *UserService) Login(dto dto.LoginUser) (string, error) {
-	var user models.User
+	log.Debug().Msg("Logging in user")
 
+	var user models.User
 	err := s.DB.First(&user, "email = ?", dto.Email).Error
 	if err != nil {
 		return "", err

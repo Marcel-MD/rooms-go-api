@@ -6,6 +6,7 @@ import (
 
 	"github.com/Marcel-MD/rooms-go-api/dto"
 	"github.com/Marcel-MD/rooms-go-api/models"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
 
@@ -28,6 +29,7 @@ var roomService IRoomService
 
 func GetRoomService() IRoomService {
 	roomOnce.Do(func() {
+		log.Info().Msg("Initializing room service")
 		roomService = &RoomService{
 			DB: models.GetDB(),
 		}
@@ -36,14 +38,17 @@ func GetRoomService() IRoomService {
 }
 
 func (s *RoomService) FindAll() []models.Room {
+	log.Debug().Msg("Finding all rooms")
+
 	var rooms []models.Room
 	s.DB.Find(&rooms)
 	return rooms
 }
 
 func (s *RoomService) FindOne(id string) (models.Room, error) {
-	var room models.Room
+	log.Debug().Str("id", id).Msg("Finding room")
 
+	var room models.Room
 	err := s.DB.Model(&models.Room{}).Preload("Users").First(&room, "id = ?", id).Error
 	if err != nil {
 		return room, err
@@ -53,8 +58,9 @@ func (s *RoomService) FindOne(id string) (models.Room, error) {
 }
 
 func (s *RoomService) Create(dto dto.CreateRoom, userID string) (models.Room, error) {
-	var user models.User
+	log.Debug().Str("user_id", userID).Msg("Creating room")
 
+	var user models.User
 	err := s.DB.First(&user, "id = ?", userID).Error
 	if err != nil {
 		return models.Room{}, err
@@ -79,8 +85,9 @@ func (s *RoomService) Create(dto dto.CreateRoom, userID string) (models.Room, er
 }
 
 func (s *RoomService) Update(id string, dto dto.UpdateRoom, userID string) (models.Room, error) {
-	var room models.Room
+	log.Debug().Str("id", id).Str("user_id", userID).Msg("Updating room")
 
+	var room models.Room
 	err := s.DB.First(&room, "id = ?", id).Error
 	if err != nil {
 		return room, err
@@ -101,8 +108,9 @@ func (s *RoomService) Update(id string, dto dto.UpdateRoom, userID string) (mode
 }
 
 func (s *RoomService) Delete(id string, userID string) error {
-	var room models.Room
+	log.Debug().Str("id", id).Str("user_id", userID).Msg("Deleting room")
 
+	var room models.Room
 	err := s.DB.First(&room, "id = ?", id).Error
 	if err != nil {
 		return err
@@ -121,8 +129,9 @@ func (s *RoomService) Delete(id string, userID string) error {
 }
 
 func (s *RoomService) AddUser(id string, email string, userID string) error {
-	var room models.Room
+	log.Debug().Str("id", id).Msg("Adding user to room")
 
+	var room models.Room
 	err := s.DB.First(&room, "id = ?", id).Error
 	if err != nil {
 		return err
@@ -148,8 +157,9 @@ func (s *RoomService) AddUser(id string, email string, userID string) error {
 }
 
 func (s *RoomService) RemoveUser(id string, email string, userID string) error {
-	var room models.Room
+	log.Debug().Str("id", id).Msg("Removing user from room")
 
+	var room models.Room
 	err := s.DB.First(&room, "id = ?", id).Error
 	if err != nil {
 		return err
