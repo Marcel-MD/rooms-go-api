@@ -2,7 +2,7 @@
 
 ## Description
 
-Simple API developed with [Gin](https://gin-gonic.com/) and [GORM](https://gorm.io/index.html)./
+Simple multi-room chat application developed with [Gin](https://gin-gonic.com/), [GORM](https://gorm.io/index.html) and [Gorilla WebSocket](https://pkg.go.dev/github.com/gorilla/websocket).\
 Work in progress...
 
 ## Environment Variable
