@@ -10,26 +10,22 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type IWebSocketHandler interface {
-	Route(r *gin.RouterGroup)
+type webSocketHandler struct {
+	service services.IMessageService
 }
 
-type WebSocketHandler struct {
-	MessageService services.IMessageService
-}
-
-func NewWebSocketHandler() IWebSocketHandler {
-	return &WebSocketHandler{
-		MessageService: services.GetMessageService(),
+func newWebSocketHandler() handler {
+	return &webSocketHandler{
+		service: services.GetMessageService(),
 	}
 }
 
-func (h *WebSocketHandler) Route(router *gin.RouterGroup) {
+func (h *webSocketHandler) route(router *gin.RouterGroup) {
 	r := router.Group("/ws").Use(middleware.JwtAuth())
-	r.GET("/:room_id", h.Connect)
+	r.GET("/:room_id", h.connect)
 }
 
-func (h *WebSocketHandler) Connect(c *gin.Context) {
+func (h *webSocketHandler) connect(c *gin.Context) {
 	roomID := c.Param("room_id")
 
 	userID, err := token.ExtractID(c)
@@ -38,7 +34,7 @@ func (h *WebSocketHandler) Connect(c *gin.Context) {
 		return
 	}
 
-	err = h.MessageService.VerifyUserInRoom(roomID, userID)
+	err = h.service.VerifyUserInRoom(roomID, userID)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return

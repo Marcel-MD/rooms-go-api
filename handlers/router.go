@@ -1,15 +1,29 @@
 package handlers
 
-import "github.com/gin-gonic/gin"
+import (
+	"sync"
+
+	"github.com/gin-gonic/gin"
+)
+
+type handler interface {
+	route(r *gin.RouterGroup)
+}
+
+var once sync.Once
 
 func InitRouter() {
-	e := gin.Default()
-	r := e.Group("/api")
+	once.Do(func() {
 
-	NewUserHandler().Route(r)
-	NewRoomHandler().Route(r)
-	NewMessageHandler().Route(r)
-	NewWebSocketHandler().Route(r)
+		e := gin.Default()
+		r := e.Group("/api")
 
-	e.Run()
+		newUserHandler().route(r)
+		newRoomHandler().route(r)
+		newMessageHandler().route(r)
+		newWebSocketHandler().route(r)
+
+		e.Run()
+
+	})
 }

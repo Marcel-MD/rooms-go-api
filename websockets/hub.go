@@ -1,6 +1,8 @@
 package websockets
 
 import (
+	"sync"
+
 	"github.com/Marcel-MD/rooms-go-api/models"
 	"github.com/Marcel-MD/rooms-go-api/services"
 )
@@ -15,17 +17,20 @@ type hub struct {
 	service    services.IMessageService
 }
 
+var once sync.Once
 var h hub
 
 func InitHub() {
-	h = hub{
-		rooms:      make(map[string]map[*connection]bool),
-		broadcast:  make(chan models.Message),
-		register:   make(chan subscription),
-		unregister: make(chan subscription),
-		service:    services.GetMessageService(),
-	}
-	go h.run()
+	once.Do(func() {
+		h = hub{
+			rooms:      make(map[string]map[*connection]bool),
+			broadcast:  make(chan models.Message),
+			register:   make(chan subscription),
+			unregister: make(chan subscription),
+			service:    services.GetMessageService(),
+		}
+		go h.run()
+	})
 }
 
 func (h *hub) run() {

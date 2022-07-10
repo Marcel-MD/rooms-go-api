@@ -10,42 +10,38 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type IRoomHandler interface {
-	Route(r *gin.RouterGroup)
+type roomHandler struct {
+	service services.IRoomService
 }
 
-type RoomHandler struct {
-	Service services.IRoomService
-}
-
-func NewRoomHandler() IRoomHandler {
-	return &RoomHandler{
-		Service: services.GetRoomService(),
+func newRoomHandler() handler {
+	return &roomHandler{
+		service: services.GetRoomService(),
 	}
 }
 
-func (h *RoomHandler) Route(router *gin.RouterGroup) {
+func (h *roomHandler) route(router *gin.RouterGroup) {
 	r := router.Group("/rooms")
-	r.GET("/", h.FindAll)
-	r.GET("/:id", h.FindOne)
+	r.GET("/", h.findAll)
+	r.GET("/:id", h.findOne)
 
 	p := r.Use(middleware.JwtAuth())
-	p.POST("/", h.Create)
-	p.PUT("/:id", h.Update)
-	p.DELETE("/:id", h.Delete)
-	p.POST("/:id/users/:email", h.AddUser)
-	p.DELETE("/:id/users/:email", h.RemoveUser)
+	p.POST("/", h.create)
+	p.PUT("/:id", h.update)
+	p.DELETE("/:id", h.delete)
+	p.POST("/:id/users/:email", h.addUser)
+	p.DELETE("/:id/users/:email", h.removeUser)
 }
 
-func (h *RoomHandler) FindAll(c *gin.Context) {
-	rooms := h.Service.FindAll()
+func (h *roomHandler) findAll(c *gin.Context) {
+	rooms := h.service.FindAll()
 	c.JSON(http.StatusOK, rooms)
 }
 
-func (h *RoomHandler) FindOne(c *gin.Context) {
+func (h *roomHandler) findOne(c *gin.Context) {
 	id := c.Param("id")
 
-	room, err := h.Service.FindOne(id)
+	room, err := h.service.FindOne(id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "room not found"})
 		return
@@ -54,7 +50,7 @@ func (h *RoomHandler) FindOne(c *gin.Context) {
 	c.JSON(http.StatusOK, room)
 }
 
-func (h *RoomHandler) Create(c *gin.Context) {
+func (h *roomHandler) create(c *gin.Context) {
 
 	userID, err := token.ExtractID(c)
 	if err != nil {
@@ -69,7 +65,7 @@ func (h *RoomHandler) Create(c *gin.Context) {
 		return
 	}
 
-	room, err := h.Service.Create(dto, userID)
+	room, err := h.service.Create(dto, userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -78,7 +74,7 @@ func (h *RoomHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusOK, room)
 }
 
-func (h *RoomHandler) Update(c *gin.Context) {
+func (h *roomHandler) update(c *gin.Context) {
 	id := c.Param("id")
 
 	userID, err := token.ExtractID(c)
@@ -94,7 +90,7 @@ func (h *RoomHandler) Update(c *gin.Context) {
 		return
 	}
 
-	room, err := h.Service.Update(id, dto, userID)
+	room, err := h.service.Update(id, dto, userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -103,7 +99,7 @@ func (h *RoomHandler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, room)
 }
 
-func (h *RoomHandler) Delete(c *gin.Context) {
+func (h *roomHandler) delete(c *gin.Context) {
 	id := c.Param("id")
 
 	userID, err := token.ExtractID(c)
@@ -112,7 +108,7 @@ func (h *RoomHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	err = h.Service.Delete(id, userID)
+	err = h.service.Delete(id, userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -121,7 +117,7 @@ func (h *RoomHandler) Delete(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "room deleted"})
 }
 
-func (h *RoomHandler) AddUser(c *gin.Context) {
+func (h *roomHandler) addUser(c *gin.Context) {
 	id := c.Param("id")
 	email := c.Param("email")
 
@@ -131,7 +127,7 @@ func (h *RoomHandler) AddUser(c *gin.Context) {
 		return
 	}
 
-	err = h.Service.AddUser(id, email, userID)
+	err = h.service.AddUser(id, email, userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -140,7 +136,7 @@ func (h *RoomHandler) AddUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "user added"})
 }
 
-func (h *RoomHandler) RemoveUser(c *gin.Context) {
+func (h *roomHandler) removeUser(c *gin.Context) {
 	id := c.Param("id")
 	email := c.Param("email")
 
@@ -150,7 +146,7 @@ func (h *RoomHandler) RemoveUser(c *gin.Context) {
 		return
 	}
 
-	err = h.Service.RemoveUser(id, email, userID)
+	err = h.service.RemoveUser(id, email, userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

@@ -11,31 +11,27 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type IMessageHandler interface {
-	Route(r *gin.RouterGroup)
+type messageHandler struct {
+	service services.IMessageService
 }
 
-type MessageHandler struct {
-	Service services.IMessageService
-}
-
-func NewMessageHandler() IMessageHandler {
-	return &MessageHandler{
-		Service: services.GetMessageService(),
+func newMessageHandler() handler {
+	return &messageHandler{
+		service: services.GetMessageService(),
 	}
 }
 
-func (h *MessageHandler) Route(router *gin.RouterGroup) {
+func (h *messageHandler) route(router *gin.RouterGroup) {
 
 	r := router.Group("/messages").Use(middleware.JwtAuth())
 
-	r.GET("/:room_id", h.Find)
-	r.POST("/:room_id", h.Create)
-	r.PUT("/:id", h.Update)
-	r.DELETE("/:id", h.Delete)
+	r.GET("/:room_id", h.find)
+	r.POST("/:room_id", h.create)
+	r.PUT("/:id", h.update)
+	r.DELETE("/:id", h.delete)
 }
 
-func (h *MessageHandler) Find(c *gin.Context) {
+func (h *messageHandler) find(c *gin.Context) {
 	roomID := c.Param("room_id")
 	var err error
 	params := dto.MessageQueryParams{}
@@ -56,7 +52,7 @@ func (h *MessageHandler) Find(c *gin.Context) {
 		return
 	}
 
-	messages, err := h.Service.FindByRoomID(roomID, userID, params)
+	messages, err := h.service.FindByRoomID(roomID, userID, params)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -65,7 +61,7 @@ func (h *MessageHandler) Find(c *gin.Context) {
 	c.JSON(http.StatusOK, messages)
 }
 
-func (h *MessageHandler) Create(c *gin.Context) {
+func (h *messageHandler) create(c *gin.Context) {
 	roomID := c.Param("room_id")
 
 	var dto dto.CreateMessage
@@ -80,7 +76,7 @@ func (h *MessageHandler) Create(c *gin.Context) {
 		return
 	}
 
-	message, err := h.Service.Create(dto, roomID, userID)
+	message, err := h.service.Create(dto, roomID, userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -89,7 +85,7 @@ func (h *MessageHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusOK, message)
 }
 
-func (h *MessageHandler) Update(c *gin.Context) {
+func (h *messageHandler) update(c *gin.Context) {
 	id := c.Param("id")
 
 	var dto dto.UpdateMessage
@@ -104,7 +100,7 @@ func (h *MessageHandler) Update(c *gin.Context) {
 		return
 	}
 
-	message, err := h.Service.Update(id, dto, userID)
+	message, err := h.service.Update(id, dto, userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -113,7 +109,7 @@ func (h *MessageHandler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, message)
 }
 
-func (h *MessageHandler) Delete(c *gin.Context) {
+func (h *messageHandler) delete(c *gin.Context) {
 	id := c.Param("id")
 
 	userID, err := token.ExtractID(c)
@@ -122,7 +118,7 @@ func (h *MessageHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	err = h.Service.Delete(id, userID)
+	err = h.service.Delete(id, userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

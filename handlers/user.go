@@ -10,33 +10,29 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type IUserHandler interface {
-	Route(r *gin.RouterGroup)
+type userHandler struct {
+	service services.IUserService
 }
 
-type UserHandler struct {
-	Service services.IUserService
-}
-
-func NewUserHandler() IUserHandler {
-	return &UserHandler{
-		Service: services.GetUserService(),
+func newUserHandler() handler {
+	return &userHandler{
+		service: services.GetUserService(),
 	}
 }
 
-func (h *UserHandler) Route(router *gin.RouterGroup) {
+func (h *userHandler) route(router *gin.RouterGroup) {
 
 	r := router.Group("/users")
-	r.POST("/register", h.Register)
-	r.POST("/login", h.Login)
-	r.GET("/", h.FindAll)
-	r.GET("/:id", h.FindOne)
+	r.POST("/register", h.register)
+	r.POST("/login", h.login)
+	r.GET("/", h.findAll)
+	r.GET("/:id", h.findOne)
 
 	p := r.Use(middleware.JwtAuth())
-	p.GET("/current", h.Current)
+	p.GET("/current", h.current)
 }
 
-func (h *UserHandler) Register(c *gin.Context) {
+func (h *userHandler) register(c *gin.Context) {
 	var dto dto.RegisterUser
 
 	err := c.ShouldBindJSON(&dto)
@@ -45,7 +41,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 		return
 	}
 
-	user, err := h.Service.Register(dto)
+	user, err := h.service.Register(dto)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -54,7 +50,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-func (h *UserHandler) Login(c *gin.Context) {
+func (h *userHandler) login(c *gin.Context) {
 	var dto dto.LoginUser
 
 	err := c.ShouldBindJSON(&dto)
@@ -63,7 +59,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 		return
 	}
 
-	token, err := h.Service.Login(dto)
+	token, err := h.service.Login(dto)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "username or password is incorrect."})
@@ -74,7 +70,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 
 }
 
-func (h *UserHandler) Current(c *gin.Context) {
+func (h *userHandler) current(c *gin.Context) {
 
 	id, err := token.ExtractID(c)
 	if err != nil {
@@ -82,7 +78,7 @@ func (h *UserHandler) Current(c *gin.Context) {
 		return
 	}
 
-	user, err := h.Service.FindOne(id)
+	user, err := h.service.FindOne(id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "record not found"})
 		return
@@ -91,13 +87,13 @@ func (h *UserHandler) Current(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-func (h *UserHandler) FindAll(c *gin.Context) {
-	users := h.Service.FindAll()
+func (h *userHandler) findAll(c *gin.Context) {
+	users := h.service.FindAll()
 	c.JSON(http.StatusOK, users)
 }
 
-func (h *UserHandler) FindOne(c *gin.Context) {
-	user, err := h.Service.FindOne(c.Param("id"))
+func (h *userHandler) findOne(c *gin.Context) {
+	user, err := h.service.FindOne(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "record not found"})
 		return
