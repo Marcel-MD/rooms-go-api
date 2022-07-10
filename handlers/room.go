@@ -6,7 +6,6 @@ import (
 	"github.com/Marcel-MD/rooms-go-api/dto"
 	"github.com/Marcel-MD/rooms-go-api/middleware"
 	"github.com/Marcel-MD/rooms-go-api/services"
-	"github.com/Marcel-MD/rooms-go-api/token"
 	"github.com/gin-gonic/gin"
 )
 
@@ -52,14 +51,10 @@ func (h *roomHandler) findOne(c *gin.Context) {
 
 func (h *roomHandler) create(c *gin.Context) {
 
-	userID, err := token.ExtractID(c)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
+	userID := c.GetString("user_id")
 
 	var dto dto.CreateRoom
-	err = c.ShouldBindJSON(&dto)
+	err := c.ShouldBindJSON(&dto)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -77,14 +72,10 @@ func (h *roomHandler) create(c *gin.Context) {
 func (h *roomHandler) update(c *gin.Context) {
 	id := c.Param("id")
 
-	userID, err := token.ExtractID(c)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
+	userID := c.GetString("user_id")
 
 	var dto dto.UpdateRoom
-	err = c.ShouldBindJSON(&dto)
+	err := c.ShouldBindJSON(&dto)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -102,13 +93,9 @@ func (h *roomHandler) update(c *gin.Context) {
 func (h *roomHandler) delete(c *gin.Context) {
 	id := c.Param("id")
 
-	userID, err := token.ExtractID(c)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
+	userID := c.GetString("user_id")
 
-	err = h.service.Delete(id, userID)
+	err := h.service.Delete(id, userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -121,13 +108,9 @@ func (h *roomHandler) addUser(c *gin.Context) {
 	id := c.Param("id")
 	email := c.Param("email")
 
-	userID, err := token.ExtractID(c)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
+	userID := c.GetString("user_id")
 
-	err = h.service.AddUser(id, email, userID)
+	err := h.service.AddUser(id, email, userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -140,13 +123,9 @@ func (h *roomHandler) removeUser(c *gin.Context) {
 	id := c.Param("id")
 	email := c.Param("email")
 
-	userID, err := token.ExtractID(c)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
+	userID := c.GetString("user_id")
 
-	err = h.service.RemoveUser(id, email, userID)
+	err := h.service.RemoveUser(id, email, userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

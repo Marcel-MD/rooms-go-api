@@ -156,11 +156,11 @@ func (s *RoomService) AddUser(id string, email string, userID string) error {
 	return nil
 }
 
-func (s *RoomService) RemoveUser(id string, email string, userID string) error {
-	log.Debug().Str("id", id).Msg("Removing user from room")
+func (s *RoomService) RemoveUser(roomId string, email string, userID string) error {
+	log.Debug().Str("room_id", roomId).Msg("Removing user from room")
 
 	var room models.Room
-	err := s.DB.First(&room, "id = ?", id).Error
+	err := s.DB.First(&room, "id = ?", roomId).Error
 	if err != nil {
 		return err
 	}
@@ -172,8 +172,12 @@ func (s *RoomService) RemoveUser(id string, email string, userID string) error {
 		return err
 	}
 
-	if room.OwnerID != userID && user.ID != id {
+	if room.OwnerID != userID && user.ID != userID {
 		return errors.New("unauthorized")
+	}
+
+	if room.OwnerID == user.ID {
+		return errors.New("you are the owner of this room")
 	}
 
 	err = s.DB.Model(&room).Association("Users").Delete(&user)

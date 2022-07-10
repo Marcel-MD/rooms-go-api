@@ -7,7 +7,6 @@ import (
 	"github.com/Marcel-MD/rooms-go-api/dto"
 	"github.com/Marcel-MD/rooms-go-api/middleware"
 	"github.com/Marcel-MD/rooms-go-api/services"
-	"github.com/Marcel-MD/rooms-go-api/token"
 	"github.com/gin-gonic/gin"
 )
 
@@ -46,11 +45,7 @@ func (h *messageHandler) find(c *gin.Context) {
 		params.Size = 20
 	}
 
-	userID, err := token.ExtractID(c)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
+	userID := c.GetString("user_id")
 
 	messages, err := h.service.FindByRoomID(roomID, userID, params)
 	if err != nil {
@@ -70,11 +65,7 @@ func (h *messageHandler) create(c *gin.Context) {
 		return
 	}
 
-	userID, err := token.ExtractID(c)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
+	userID := c.GetString("user_id")
 
 	message, err := h.service.Create(dto, roomID, userID)
 	if err != nil {
@@ -94,11 +85,7 @@ func (h *messageHandler) update(c *gin.Context) {
 		return
 	}
 
-	userID, err := token.ExtractID(c)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
+	userID := c.GetString("user_id")
 
 	message, err := h.service.Update(id, dto, userID)
 	if err != nil {
@@ -112,13 +99,9 @@ func (h *messageHandler) update(c *gin.Context) {
 func (h *messageHandler) delete(c *gin.Context) {
 	id := c.Param("id")
 
-	userID, err := token.ExtractID(c)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
+	userID := c.GetString("user_id")
 
-	err = h.service.Delete(id, userID)
+	err := h.service.Delete(id, userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

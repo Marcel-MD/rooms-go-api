@@ -6,7 +6,6 @@ import (
 	"github.com/Marcel-MD/rooms-go-api/dto"
 	"github.com/Marcel-MD/rooms-go-api/middleware"
 	"github.com/Marcel-MD/rooms-go-api/services"
-	"github.com/Marcel-MD/rooms-go-api/token"
 	"github.com/gin-gonic/gin"
 )
 
@@ -72,11 +71,7 @@ func (h *userHandler) login(c *gin.Context) {
 
 func (h *userHandler) current(c *gin.Context) {
 
-	id, err := token.ExtractID(c)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
+	id := c.GetString("user_id")
 
 	user, err := h.service.FindOne(id)
 	if err != nil {
