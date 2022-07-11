@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/Marcel-MD/rooms-go-api/handlers"
-	"github.com/Marcel-MD/rooms-go-api/websockets"
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -20,6 +19,5 @@ func main() {
 		log.Fatal().Err(err).Msg("Error loading .env file")
 	}
 
-	websockets.InitHub()
 	handlers.InitRouter()
 }

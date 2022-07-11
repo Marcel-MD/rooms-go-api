@@ -6,16 +6,19 @@ import (
 	"github.com/Marcel-MD/rooms-go-api/dto"
 	"github.com/Marcel-MD/rooms-go-api/middleware"
 	"github.com/Marcel-MD/rooms-go-api/services"
+	"github.com/Marcel-MD/rooms-go-api/websockets"
 	"github.com/gin-gonic/gin"
 )
 
 type roomHandler struct {
 	service services.IRoomService
+	manager websockets.IManager
 }
 
 func newRoomHandler() handler {
 	return &roomHandler{
 		service: services.GetRoomService(),
+		manager: websockets.GetManager(),
 	}
 }
 
@@ -29,7 +32,7 @@ func (h *roomHandler) route(router *gin.RouterGroup) {
 	p.PUT("/:id", h.update)
 	p.DELETE("/:id", h.delete)
 	p.POST("/:id/users/:email", h.addUser)
-	p.DELETE("/:id/users/:email", h.removeUser)
+	p.DELETE("/:id/users/:user_id", h.removeUser)
 }
 
 func (h *roomHandler) findAll(c *gin.Context) {
@@ -101,6 +104,7 @@ func (h *roomHandler) delete(c *gin.Context) {
 		return
 	}
 
+	h.manager.DisconnectRoom(id)
 	c.JSON(http.StatusOK, gin.H{"message": "room deleted"})
 }
 
@@ -120,16 +124,18 @@ func (h *roomHandler) addUser(c *gin.Context) {
 }
 
 func (h *roomHandler) removeUser(c *gin.Context) {
-	id := c.Param("id")
-	email := c.Param("email")
+	roomID := c.Param("id")
+	removeUserID := c.Param("user_id")
 
 	userID := c.GetString("user_id")
 
-	err := h.service.RemoveUser(id, email, userID)
+	err := h.service.RemoveUser(roomID, removeUserID, userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	h.manager.DisconnectUserFromRoom(removeUserID, roomID)
 
 	c.JSON(http.StatusOK, gin.H{"message": "user removed"})
 }

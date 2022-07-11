@@ -33,7 +33,7 @@ func (s subscription) readPump() {
 		var dto dto.CreateMessage
 		err := c.ws.ReadJSON(&dto)
 		if err != nil {
-			if websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
+			if websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure, websocket.CloseNoStatusReceived) {
 				log.Debug().Str("user_id", s.userID).Str("room_id", s.roomID).Msg("Normal websocket close")
 				break
 			}

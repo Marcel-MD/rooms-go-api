@@ -11,11 +11,13 @@ import (
 
 type webSocketHandler struct {
 	service services.IMessageService
+	manager websockets.IManager
 }
 
 func newWebSocketHandler() handler {
 	return &webSocketHandler{
 		service: services.GetMessageService(),
+		manager: websockets.GetManager(),
 	}
 }
 
@@ -35,5 +37,5 @@ func (h *webSocketHandler) connect(c *gin.Context) {
 		return
 	}
 
-	websockets.ServeWs(c.Writer, c.Request, roomID, userID)
+	h.manager.ServeWs(c.Writer, c.Request, roomID, userID)
 }

@@ -17,7 +17,7 @@ type IRoomService interface {
 	Update(id string, dto dto.UpdateRoom, userID string) (models.Room, error)
 	Delete(id string, userID string) error
 	AddUser(id string, email string, userID string) error
-	RemoveUser(id string, email string, userID string) error
+	RemoveUser(id string, removeUserID string, userID string) error
 }
 
 type RoomService struct {
@@ -156,8 +156,8 @@ func (s *RoomService) AddUser(id string, email string, userID string) error {
 	return nil
 }
 
-func (s *RoomService) RemoveUser(roomId string, email string, userID string) error {
-	log.Debug().Str("room_id", roomId).Msg("Removing user from room")
+func (s *RoomService) RemoveUser(roomId string, removeUserID string, userID string) error {
+	log.Debug().Str("room_id", roomId).Str("user_id", removeUserID).Msg("Removing user from room")
 
 	var room models.Room
 	err := s.DB.First(&room, "id = ?", roomId).Error
@@ -166,17 +166,16 @@ func (s *RoomService) RemoveUser(roomId string, email string, userID string) err
 	}
 
 	var user models.User
-
-	err = s.DB.First(&user, "email = ?", email).Error
+	err = s.DB.First(&user, "id = ?", removeUserID).Error
 	if err != nil {
 		return err
 	}
 
-	if room.OwnerID != userID && user.ID != userID {
+	if room.OwnerID != userID && removeUserID != userID {
 		return errors.New("unauthorized")
 	}
 
-	if room.OwnerID == user.ID {
+	if room.OwnerID == removeUserID {
 		return errors.New("you are the owner of this room")
 	}
 
