@@ -29,6 +29,7 @@ func (h *userHandler) route(router *gin.RouterGroup) {
 
 	p := r.Use(middleware.JwtAuth())
 	p.GET("/current", h.current)
+	p.PUT("/", h.update)
 }
 
 func (h *userHandler) register(c *gin.Context) {
@@ -91,6 +92,26 @@ func (h *userHandler) findOne(c *gin.Context) {
 	user, err := h.service.FindOne(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "record not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, user)
+}
+
+func (h *userHandler) update(c *gin.Context) {
+
+	userID := c.GetString("user_id")
+
+	var dto dto.UpdateUser
+	err := c.ShouldBindJSON(&dto)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	user, err := h.service.Update(dto, userID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 

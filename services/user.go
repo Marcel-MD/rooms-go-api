@@ -17,6 +17,7 @@ type IUserService interface {
 	FindOne(id string) (models.User, error)
 	Register(dto dto.RegisterUser) (models.User, error)
 	Login(dto dto.LoginUser) (string, error)
+	Update(dto dto.UpdateUser, id string) (models.User, error)
 }
 
 type UserService struct {
@@ -100,6 +101,26 @@ func (s *UserService) Login(dto dto.LoginUser) (string, error) {
 	}
 
 	return token.Generate(user.ID)
+}
+
+func (s *UserService) Update(dto dto.UpdateUser, id string) (models.User, error) {
+	log.Debug().Msg("Updating user")
+
+	var user models.User
+	err := s.DB.First(&user, "id = ?", id).Error
+	if err != nil {
+		return user, err
+	}
+
+	user.FirstName = dto.FirstName
+	user.LastName = dto.LastName
+
+	err = s.DB.Save(&user).Error
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
 }
 
 func (s *UserService) verifyPassword(password, hashedPassword string) error {
