@@ -28,7 +28,6 @@ func (h *webSocketHandler) route(router *gin.RouterGroup) {
 
 func (h *webSocketHandler) connect(c *gin.Context) {
 	roomID := c.Param("room_id")
-
 	userID := c.GetString("user_id")
 
 	err := h.service.VerifyUserInRoom(roomID, userID)

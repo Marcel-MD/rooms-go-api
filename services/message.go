@@ -11,19 +11,21 @@ import (
 )
 
 type IMessageService interface {
-	FindByRoomID(roomID string, userID string, params dto.MessageQueryParams) ([]models.Message, error)
-	Create(dto dto.CreateMessage, roomID string, userID string) (models.Message, error)
-	Update(id string, dto dto.UpdateMessage, userID string) (models.Message, error)
-	Delete(id string, userID string) error
-	VerifyUserInRoom(roomID string, userID string) error
+	FindByRoomID(roomID, userID string, params dto.MessageQueryParams) ([]models.Message, error)
+	Create(roomID, userID string, dto dto.CreateMessage) (models.Message, error)
+	Update(id, userID string, dto dto.UpdateMessage) (models.Message, error)
+	Delete(id, userID string) error
+	VerifyUserInRoom(roomID, userID string) error
 }
 
 type MessageService struct {
 	DB *gorm.DB
 }
 
-var messageOnce sync.Once
-var messageService IMessageService
+var (
+	messageOnce    sync.Once
+	messageService IMessageService
+)
 
 func GetMessageService() IMessageService {
 	messageOnce.Do(func() {
@@ -35,7 +37,7 @@ func GetMessageService() IMessageService {
 	return messageService
 }
 
-func (s *MessageService) FindByRoomID(roomID string, userID string, params dto.MessageQueryParams) ([]models.Message, error) {
+func (s *MessageService) FindByRoomID(roomID, userID string, params dto.MessageQueryParams) ([]models.Message, error) {
 	log.Debug().Str("room_id", roomID).Str("user_id", userID).Msg("Finding messages")
 
 	var messages []models.Message
@@ -51,7 +53,7 @@ func (s *MessageService) FindByRoomID(roomID string, userID string, params dto.M
 	return messages, nil
 }
 
-func (s *MessageService) Create(dto dto.CreateMessage, roomID string, userID string) (models.Message, error) {
+func (s *MessageService) Create(roomID, userID string, dto dto.CreateMessage) (models.Message, error) {
 	log.Debug().Str("room_id", roomID).Str("user_id", userID).Msg("Creating message")
 
 	var message models.Message
@@ -80,7 +82,7 @@ func (s *MessageService) Create(dto dto.CreateMessage, roomID string, userID str
 	return message, nil
 }
 
-func (s *MessageService) Update(id string, dto dto.UpdateMessage, userID string) (models.Message, error) {
+func (s *MessageService) Update(id, userID string, dto dto.UpdateMessage) (models.Message, error) {
 	log.Debug().Str("id", id).Str("user_id", userID).Msg("Updating message")
 
 	var message models.Message
@@ -103,7 +105,7 @@ func (s *MessageService) Update(id string, dto dto.UpdateMessage, userID string)
 	return message, nil
 }
 
-func (s *MessageService) Delete(id string, userID string) error {
+func (s *MessageService) Delete(id, userID string) error {
 	log.Debug().Str("id", id).Str("user_id", userID).Msg("Deleting message")
 
 	var message models.Message
@@ -124,7 +126,7 @@ func (s *MessageService) Delete(id string, userID string) error {
 	return nil
 }
 
-func (s *MessageService) VerifyUserInRoom(roomID string, userID string) error {
+func (s *MessageService) VerifyUserInRoom(roomID, userID string) error {
 	log.Debug().Str("room_id", roomID).Str("user_id", userID).Msg("Verifying user in room")
 
 	var room models.Room

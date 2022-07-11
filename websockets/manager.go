@@ -9,15 +9,17 @@ import (
 )
 
 type IManager interface {
-	ServeWs(w http.ResponseWriter, r *http.Request, roomID string, userID string)
-	DisconnectUserFromRoom(userID string, roomID string)
+	ServeWs(w http.ResponseWriter, r *http.Request, roomID, userID string)
+	DisconnectUserFromRoom(userID, roomID string)
 	DisconnectRoom(roomID string)
 }
 
 type Manager struct{}
 
-var managerOnce sync.Once
-var manager IManager
+var (
+	managerOnce sync.Once
+	manager     IManager
+)
 
 func GetManager() IManager {
 	managerOnce.Do(func() {
@@ -29,10 +31,10 @@ func GetManager() IManager {
 }
 
 // ServeWs handles websocket requests from the peer.
-func (m *Manager) ServeWs(w http.ResponseWriter, r *http.Request, roomID string, userID string) {
+func (m *Manager) ServeWs(w http.ResponseWriter, r *http.Request, roomID, userID string) {
 	log.Info().Str("room_id", roomID).Str("user_id", userID).Msg("New websocket connection")
-	ws, err := upgrader.Upgrade(w, r, nil)
 
+	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Error().Err(err).Str("room_id", roomID).Str("user_id", userID).Msg("Failed to upgrade websocket connection")
 		return
@@ -46,7 +48,7 @@ func (m *Manager) ServeWs(w http.ResponseWriter, r *http.Request, roomID string,
 	go s.readPump()
 }
 
-func (m *Manager) DisconnectUserFromRoom(userID string, roomID string) {
+func (m *Manager) DisconnectUserFromRoom(userID, roomID string) {
 	log.Debug().Str("room_id", roomID).Str("user_id", userID).Msg("Disconnecting user from room connection")
 
 	connections := h.rooms[roomID]

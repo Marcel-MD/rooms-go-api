@@ -24,13 +24,11 @@ func initDB() *gorm.DB {
 
 	dsn := os.Getenv("DATABASE_URL")
 
-	// Open connection
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to connect to database")
 	}
 
-	// Migrate models
 	db.AutoMigrate(&User{})
 	db.AutoMigrate(&Room{})
 	db.AutoMigrate(&Message{})

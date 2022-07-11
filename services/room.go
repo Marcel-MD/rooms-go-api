@@ -14,18 +14,20 @@ type IRoomService interface {
 	FindAll() []models.Room
 	FindOne(id string) (models.Room, error)
 	Create(dto dto.CreateRoom, userID string) (models.Room, error)
-	Update(id string, dto dto.UpdateRoom, userID string) (models.Room, error)
-	Delete(id string, userID string) error
-	AddUser(id string, email string, userID string) error
-	RemoveUser(id string, removeUserID string, userID string) error
+	Update(id, userID string, dto dto.UpdateRoom) (models.Room, error)
+	Delete(id, userID string) error
+	AddUser(id, email, userID string) error
+	RemoveUser(id, removeUserID, userID string) error
 }
 
 type RoomService struct {
 	DB *gorm.DB
 }
 
-var roomOnce sync.Once
-var roomService IRoomService
+var (
+	roomOnce    sync.Once
+	roomService IRoomService
+)
 
 func GetRoomService() IRoomService {
 	roomOnce.Do(func() {
@@ -84,7 +86,7 @@ func (s *RoomService) Create(dto dto.CreateRoom, userID string) (models.Room, er
 	return room, nil
 }
 
-func (s *RoomService) Update(id string, dto dto.UpdateRoom, userID string) (models.Room, error) {
+func (s *RoomService) Update(id, userID string, dto dto.UpdateRoom) (models.Room, error) {
 	log.Debug().Str("id", id).Str("user_id", userID).Msg("Updating room")
 
 	var room models.Room
@@ -107,7 +109,7 @@ func (s *RoomService) Update(id string, dto dto.UpdateRoom, userID string) (mode
 	return room, nil
 }
 
-func (s *RoomService) Delete(id string, userID string) error {
+func (s *RoomService) Delete(id, userID string) error {
 	log.Debug().Str("id", id).Str("user_id", userID).Msg("Deleting room")
 
 	var room models.Room
@@ -128,7 +130,7 @@ func (s *RoomService) Delete(id string, userID string) error {
 	return nil
 }
 
-func (s *RoomService) AddUser(id string, email string, userID string) error {
+func (s *RoomService) AddUser(id, email, userID string) error {
 	log.Debug().Str("id", id).Msg("Adding user to room")
 
 	var room models.Room
@@ -156,7 +158,7 @@ func (s *RoomService) AddUser(id string, email string, userID string) error {
 	return nil
 }
 
-func (s *RoomService) RemoveUser(roomId string, removeUserID string, userID string) error {
+func (s *RoomService) RemoveUser(roomId, removeUserID, userID string) error {
 	log.Debug().Str("room_id", roomId).Str("user_id", removeUserID).Msg("Removing user from room")
 
 	var room models.Room

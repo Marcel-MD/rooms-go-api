@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 )
@@ -47,11 +47,13 @@ func ExtractID(c *gin.Context) (string, error) {
 	if err != nil {
 		return "0", err
 	}
+
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if ok && token.Valid {
 		uid := claims["user_id"].(string)
 		return uid, nil
 	}
+
 	return "0", nil
 }
 
@@ -61,9 +63,11 @@ func extract(c *gin.Context) string {
 	if token != "" {
 		return token
 	}
+
 	bearerToken := c.Request.Header.Get("Authorization")
 	if len(strings.Split(bearerToken, " ")) == 2 {
 		return strings.Split(bearerToken, " ")[1]
 	}
+
 	return ""
 }

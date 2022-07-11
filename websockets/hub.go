@@ -18,8 +18,10 @@ type hub struct {
 	service    services.IMessageService
 }
 
-var hubOnce sync.Once
-var h hub
+var (
+	hubOnce sync.Once
+	h       hub
+)
 
 func initHub() {
 	hubOnce.Do(func() {
@@ -37,6 +39,7 @@ func initHub() {
 
 func (h *hub) run() {
 	log.Info().Msg("Starting websocket hub")
+
 	for {
 		select {
 

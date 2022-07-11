@@ -53,7 +53,6 @@ func (h *roomHandler) findOne(c *gin.Context) {
 }
 
 func (h *roomHandler) create(c *gin.Context) {
-
 	userID := c.GetString("user_id")
 
 	var dto dto.CreateRoom
@@ -74,7 +73,6 @@ func (h *roomHandler) create(c *gin.Context) {
 
 func (h *roomHandler) update(c *gin.Context) {
 	id := c.Param("id")
-
 	userID := c.GetString("user_id")
 
 	var dto dto.UpdateRoom
@@ -84,7 +82,7 @@ func (h *roomHandler) update(c *gin.Context) {
 		return
 	}
 
-	room, err := h.service.Update(id, dto, userID)
+	room, err := h.service.Update(id, userID, dto)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -95,7 +93,6 @@ func (h *roomHandler) update(c *gin.Context) {
 
 func (h *roomHandler) delete(c *gin.Context) {
 	id := c.Param("id")
-
 	userID := c.GetString("user_id")
 
 	err := h.service.Delete(id, userID)
@@ -111,7 +108,6 @@ func (h *roomHandler) delete(c *gin.Context) {
 func (h *roomHandler) addUser(c *gin.Context) {
 	id := c.Param("id")
 	email := c.Param("email")
-
 	userID := c.GetString("user_id")
 
 	err := h.service.AddUser(id, email, userID)
@@ -126,7 +122,6 @@ func (h *roomHandler) addUser(c *gin.Context) {
 func (h *roomHandler) removeUser(c *gin.Context) {
 	roomID := c.Param("id")
 	removeUserID := c.Param("user_id")
-
 	userID := c.GetString("user_id")
 
 	err := h.service.RemoveUser(roomID, removeUserID, userID)
@@ -136,6 +131,5 @@ func (h *roomHandler) removeUser(c *gin.Context) {
 	}
 
 	h.manager.DisconnectUserFromRoom(removeUserID, roomID)
-
 	c.JSON(http.StatusOK, gin.H{"message": "user removed"})
 }

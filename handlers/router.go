@@ -25,6 +25,5 @@ func InitRouter() {
 		newWebSocketHandler().route(r)
 
 		e.Run()
-
 	})
 }

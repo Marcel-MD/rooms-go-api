@@ -33,8 +33,8 @@ func (h *userHandler) route(router *gin.RouterGroup) {
 }
 
 func (h *userHandler) register(c *gin.Context) {
-	var dto dto.RegisterUser
 
+	var dto dto.RegisterUser
 	err := c.ShouldBindJSON(&dto)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -51,8 +51,8 @@ func (h *userHandler) register(c *gin.Context) {
 }
 
 func (h *userHandler) login(c *gin.Context) {
-	var dto dto.LoginUser
 
+	var dto dto.LoginUser
 	err := c.ShouldBindJSON(&dto)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -60,18 +60,15 @@ func (h *userHandler) login(c *gin.Context) {
 	}
 
 	token, err := h.service.Login(dto)
-
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "username or password is incorrect."})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"token": token})
-
 }
 
 func (h *userHandler) current(c *gin.Context) {
-
 	id := c.GetString("user_id")
 
 	user, err := h.service.FindOne(id)
@@ -89,7 +86,9 @@ func (h *userHandler) findAll(c *gin.Context) {
 }
 
 func (h *userHandler) findOne(c *gin.Context) {
-	user, err := h.service.FindOne(c.Param("id"))
+	id := c.Param("id")
+
+	user, err := h.service.FindOne(id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "record not found"})
 		return
@@ -99,7 +98,6 @@ func (h *userHandler) findOne(c *gin.Context) {
 }
 
 func (h *userHandler) update(c *gin.Context) {
-
 	userID := c.GetString("user_id")
 
 	var dto dto.UpdateUser

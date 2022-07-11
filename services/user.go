@@ -24,8 +24,10 @@ type UserService struct {
 	DB *gorm.DB
 }
 
-var userOnce sync.Once
-var userService IUserService
+var (
+	userOnce    sync.Once
+	userService IUserService
+)
 
 func GetUserService() IUserService {
 	userOnce.Do(func() {

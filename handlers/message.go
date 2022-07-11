@@ -67,7 +67,7 @@ func (h *messageHandler) create(c *gin.Context) {
 
 	userID := c.GetString("user_id")
 
-	message, err := h.service.Create(dto, roomID, userID)
+	message, err := h.service.Create(roomID, userID, dto)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -87,7 +87,7 @@ func (h *messageHandler) update(c *gin.Context) {
 
 	userID := c.GetString("user_id")
 
-	message, err := h.service.Update(id, dto, userID)
+	message, err := h.service.Update(id, userID, dto)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

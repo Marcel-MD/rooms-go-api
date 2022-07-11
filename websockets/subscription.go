@@ -46,7 +46,7 @@ func (s subscription) readPump() {
 			continue
 		}
 
-		m, err := h.service.Create(dto, s.roomID, s.userID)
+		m, err := h.service.Create(s.roomID, s.userID, dto)
 		if err != nil {
 			log.Err(err).Str("user_id", s.userID).Str("room_id", s.roomID).Msg("Failed to create message")
 			break
@@ -62,11 +62,13 @@ func (s *subscription) writePump() {
 
 	c := s.conn
 	ticker := time.NewTicker(pingPeriod)
+
 	defer func() {
 		log.Debug().Str("user_id", s.userID).Str("room_id", s.roomID).Msg("Stopping websocket write pump")
 		ticker.Stop()
 		c.ws.Close()
 	}()
+
 	for {
 		select {
 		case message, ok := <-c.send:
@@ -80,6 +82,7 @@ func (s *subscription) writePump() {
 				c.write(websocket.CloseMessage, []byte{})
 				return
 			}
+
 		case <-ticker.C:
 			if err := c.write(websocket.PingMessage, []byte{}); err != nil {
 				log.Err(err).Str("user_id", s.userID).Str("room_id", s.roomID).Msg("Failed to write ping")
