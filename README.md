@@ -13,6 +13,7 @@ Create a `.env` file in the root directory. And add these default values:
 DATABASE_URL=postgres://postgres:password@localhost:5432/rooms
 API_SECRET=SecretSecretSecret
 TOKEN_HOUR_LIFESPAN=12
+ENVIRONMENT=dev
 ```
 
 ## Docker PostgreSQL Setup
