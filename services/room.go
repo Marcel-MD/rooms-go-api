@@ -6,8 +6,8 @@ import (
 
 	"github.com/Marcel-MD/rooms-go-api/dto"
 	"github.com/Marcel-MD/rooms-go-api/models"
+	"github.com/Marcel-MD/rooms-go-api/repositories"
 	"github.com/rs/zerolog/log"
-	"gorm.io/gorm"
 )
 
 type IRoomService interface {
@@ -21,7 +21,8 @@ type IRoomService interface {
 }
 
 type RoomService struct {
-	DB *gorm.DB
+	RoomRepository repositories.IRoomRepository
+	UserRepository repositories.IUserRepository
 }
 
 var (
@@ -33,7 +34,8 @@ func GetRoomService() IRoomService {
 	roomOnce.Do(func() {
 		log.Info().Msg("Initializing room service")
 		roomService = &RoomService{
-			DB: models.GetDB(),
+			RoomRepository: repositories.GetRoomRepository(),
+			UserRepository: repositories.GetUserRepository(),
 		}
 	})
 	return roomService
@@ -42,16 +44,13 @@ func GetRoomService() IRoomService {
 func (s *RoomService) FindAll() []models.Room {
 	log.Debug().Msg("Finding all rooms")
 
-	var rooms []models.Room
-	s.DB.Find(&rooms)
-	return rooms
+	return s.RoomRepository.FindAll()
 }
 
 func (s *RoomService) FindOne(id string) (models.Room, error) {
 	log.Debug().Str("id", id).Msg("Finding room")
 
-	var room models.Room
-	err := s.DB.Model(&models.Room{}).Preload("Users").First(&room, "id = ?", id).Error
+	room, err := s.RoomRepository.FindByIdWithUsers(id)
 	if err != nil {
 		return room, err
 	}
@@ -62,8 +61,7 @@ func (s *RoomService) FindOne(id string) (models.Room, error) {
 func (s *RoomService) Create(dto dto.CreateRoom, userID string) (models.Room, error) {
 	log.Debug().Str("user_id", userID).Msg("Creating room")
 
-	var user models.User
-	err := s.DB.First(&user, "id = ?", userID).Error
+	user, err := s.UserRepository.FindByID(userID)
 	if err != nil {
 		return models.Room{}, err
 	}
@@ -73,7 +71,7 @@ func (s *RoomService) Create(dto dto.CreateRoom, userID string) (models.Room, er
 		OwnerID: userID,
 	}
 
-	err = s.DB.Create(&room).Error
+	err = s.RoomRepository.Create(&room)
 	if err != nil {
 		return room, err
 	}
@@ -89,8 +87,7 @@ func (s *RoomService) Create(dto dto.CreateRoom, userID string) (models.Room, er
 func (s *RoomService) Update(id, userID string, dto dto.UpdateRoom) (models.Room, error) {
 	log.Debug().Str("id", id).Str("user_id", userID).Msg("Updating room")
 
-	var room models.Room
-	err := s.DB.First(&room, "id = ?", id).Error
+	room, err := s.RoomRepository.FindByID(id)
 	if err != nil {
 		return room, err
 	}
@@ -101,7 +98,7 @@ func (s *RoomService) Update(id, userID string, dto dto.UpdateRoom) (models.Room
 
 	room.Name = dto.Name
 
-	err = s.DB.Save(&room).Error
+	err = s.RoomRepository.Update(&room)
 	if err != nil {
 		return room, err
 	}
@@ -112,8 +109,7 @@ func (s *RoomService) Update(id, userID string, dto dto.UpdateRoom) (models.Room
 func (s *RoomService) Delete(id, userID string) error {
 	log.Debug().Str("id", id).Str("user_id", userID).Msg("Deleting room")
 
-	var room models.Room
-	err := s.DB.First(&room, "id = ?", id).Error
+	room, err := s.RoomRepository.FindByID(id)
 	if err != nil {
 		return err
 	}
@@ -122,7 +118,7 @@ func (s *RoomService) Delete(id, userID string) error {
 		return errors.New("you are not the owner of this room")
 	}
 
-	err = s.DB.Delete(&room).Error
+	err = s.RoomRepository.Delete(&room)
 	if err != nil {
 		return err
 	}
@@ -133,8 +129,7 @@ func (s *RoomService) Delete(id, userID string) error {
 func (s *RoomService) AddUser(id, email, userID string) error {
 	log.Debug().Str("id", id).Msg("Adding user to room")
 
-	var room models.Room
-	err := s.DB.First(&room, "id = ?", id).Error
+	room, err := s.RoomRepository.FindByID(id)
 	if err != nil {
 		return err
 	}
@@ -143,14 +138,12 @@ func (s *RoomService) AddUser(id, email, userID string) error {
 		return errors.New("you are not the owner of this room")
 	}
 
-	var user models.User
-
-	err = s.DB.First(&user, "email = ?", email).Error
+	user, err := s.UserRepository.FindByEmail(email)
 	if err != nil {
 		return err
 	}
 
-	err = s.DB.Model(&room).Omit("Users.*").Association("Users").Append(&user)
+	err = s.RoomRepository.AddUser(&room, &user)
 	if err != nil {
 		return err
 	}
@@ -161,14 +154,12 @@ func (s *RoomService) AddUser(id, email, userID string) error {
 func (s *RoomService) RemoveUser(roomId, removeUserID, userID string) error {
 	log.Debug().Str("room_id", roomId).Str("user_id", removeUserID).Msg("Removing user from room")
 
-	var room models.Room
-	err := s.DB.First(&room, "id = ?", roomId).Error
+	room, err := s.RoomRepository.FindByID(roomId)
 	if err != nil {
 		return err
 	}
 
-	var user models.User
-	err = s.DB.First(&user, "id = ?", removeUserID).Error
+	user, err := s.UserRepository.FindByID(removeUserID)
 	if err != nil {
 		return err
 	}
@@ -181,7 +172,7 @@ func (s *RoomService) RemoveUser(roomId, removeUserID, userID string) error {
 		return errors.New("you are the owner of this room")
 	}
 
-	err = s.DB.Model(&room).Association("Users").Delete(&user)
+	err = s.RoomRepository.RemoveUser(&room, &user)
 	if err != nil {
 		return err
 	}

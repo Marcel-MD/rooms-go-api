@@ -6,8 +6,8 @@ import (
 
 	"github.com/Marcel-MD/rooms-go-api/dto"
 	"github.com/Marcel-MD/rooms-go-api/models"
+	"github.com/Marcel-MD/rooms-go-api/repositories"
 	"github.com/rs/zerolog/log"
-	"gorm.io/gorm"
 )
 
 type IMessageService interface {
@@ -19,7 +19,9 @@ type IMessageService interface {
 }
 
 type MessageService struct {
-	DB *gorm.DB
+	MessageRepository repositories.IMessageRepository
+	RoomRepository    repositories.IRoomRepository
+	UserRepository    repositories.IUserRepository
 }
 
 var (
@@ -31,7 +33,9 @@ func GetMessageService() IMessageService {
 	messageOnce.Do(func() {
 		log.Info().Msg("Initializing message service")
 		messageService = &MessageService{
-			DB: models.GetDB(),
+			MessageRepository: repositories.GetMessageRepository(),
+			RoomRepository:    repositories.GetRoomRepository(),
+			UserRepository:    repositories.GetUserRepository(),
 		}
 	})
 	return messageService
@@ -47,8 +51,7 @@ func (s *MessageService) FindByRoomID(roomID, userID string, params dto.MessageQ
 		return messages, err
 	}
 
-	s.DB.Scopes(models.Paginate(params.Page, params.Size)).Model(&models.Message{}).
-		Order("created_at desc").Preload("User").Find(&messages, "room_id = ?", roomID)
+	messages = s.MessageRepository.FindByRoomID(roomID, params.Page, params.Size)
 
 	return messages, nil
 }
@@ -62,8 +65,7 @@ func (s *MessageService) Create(roomID, userID string, dto dto.CreateMessage) (m
 		return message, err
 	}
 
-	var user models.User
-	err = s.DB.First(&user, "id = ?", userID).Error
+	user, err := s.UserRepository.FindByID(userID)
 	if err != nil {
 		return message, err
 	}
@@ -72,7 +74,7 @@ func (s *MessageService) Create(roomID, userID string, dto dto.CreateMessage) (m
 	message.RoomID = roomID
 	message.UserID = userID
 
-	err = s.DB.Create(&message).Error
+	err = s.MessageRepository.Create(&message)
 	if err != nil {
 		return message, err
 	}
@@ -85,8 +87,7 @@ func (s *MessageService) Create(roomID, userID string, dto dto.CreateMessage) (m
 func (s *MessageService) Update(id, userID string, dto dto.UpdateMessage) (models.Message, error) {
 	log.Debug().Str("id", id).Str("user_id", userID).Msg("Updating message")
 
-	var message models.Message
-	err := s.DB.First(&message, "id = ?", id).Error
+	message, err := s.MessageRepository.FindByID(id)
 	if err != nil {
 		return message, err
 	}
@@ -97,7 +98,7 @@ func (s *MessageService) Update(id, userID string, dto dto.UpdateMessage) (model
 
 	message.Text = dto.Text
 
-	err = s.DB.Save(&message).Error
+	err = s.MessageRepository.Update(&message)
 	if err != nil {
 		return message, err
 	}
@@ -108,8 +109,7 @@ func (s *MessageService) Update(id, userID string, dto dto.UpdateMessage) (model
 func (s *MessageService) Delete(id, userID string) error {
 	log.Debug().Str("id", id).Str("user_id", userID).Msg("Deleting message")
 
-	var message models.Message
-	err := s.DB.First(&message, "id = ?", id).Error
+	message, err := s.MessageRepository.FindByID(id)
 	if err != nil {
 		return err
 	}
@@ -118,7 +118,7 @@ func (s *MessageService) Delete(id, userID string) error {
 		return errors.New("you are not allowed to delete this message")
 	}
 
-	err = s.DB.Delete(&message).Error
+	err = s.MessageRepository.Delete(&message)
 	if err != nil {
 		return err
 	}
@@ -129,8 +129,7 @@ func (s *MessageService) Delete(id, userID string) error {
 func (s *MessageService) VerifyUserInRoom(roomID, userID string) error {
 	log.Debug().Str("room_id", roomID).Str("user_id", userID).Msg("Verifying user in room")
 
-	var room models.Room
-	err := s.DB.Model(&models.Room{}).Preload("Users").First(&room, "id = ?", roomID).Error
+	room, err := s.RoomRepository.FindByIdWithUsers(roomID)
 	if err != nil {
 		return err
 	}

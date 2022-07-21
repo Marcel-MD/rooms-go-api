@@ -6,10 +6,10 @@ import (
 
 	"github.com/Marcel-MD/rooms-go-api/dto"
 	"github.com/Marcel-MD/rooms-go-api/models"
+	"github.com/Marcel-MD/rooms-go-api/repositories"
 	"github.com/Marcel-MD/rooms-go-api/token"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 )
 
 type IUserService interface {
@@ -21,7 +21,7 @@ type IUserService interface {
 }
 
 type UserService struct {
-	DB *gorm.DB
+	Repository repositories.IUserRepository
 }
 
 var (
@@ -33,7 +33,7 @@ func GetUserService() IUserService {
 	userOnce.Do(func() {
 		log.Info().Msg("Initializing user service")
 		userService = &UserService{
-			DB: models.GetDB(),
+			Repository: repositories.GetUserRepository(),
 		}
 	})
 	return userService
@@ -42,16 +42,13 @@ func GetUserService() IUserService {
 func (s *UserService) FindAll() []models.User {
 	log.Debug().Msg("Finding all users")
 
-	var users []models.User
-	s.DB.Find(&users)
-	return users
+	return s.Repository.FindAll()
 }
 
 func (s *UserService) FindOne(id string) (models.User, error) {
 	log.Debug().Str("id", id).Msg("Finding user")
 
-	var user models.User
-	err := s.DB.Model(&models.User{}).Preload("Rooms").First(&user, "id = ?", id).Error
+	user, err := s.Repository.FindByIdWithRooms(id)
 	if err != nil {
 		return user, err
 	}
@@ -62,8 +59,7 @@ func (s *UserService) FindOne(id string) (models.User, error) {
 func (s *UserService) Register(dto dto.RegisterUser) (models.User, error) {
 	log.Debug().Msg("Registering user")
 
-	var user models.User
-	err := s.DB.First(&user, "email = ?", dto.Email).Error
+	user, err := s.Repository.FindByEmail(dto.Email)
 	if err == nil {
 		return user, errors.New("user already exists")
 	}
@@ -80,7 +76,7 @@ func (s *UserService) Register(dto dto.RegisterUser) (models.User, error) {
 		Password:  string(hashedPassword),
 	}
 
-	err = s.DB.Create(&user).Error
+	err = s.Repository.Create(&user)
 	if err != nil {
 		return user, err
 	}
@@ -91,8 +87,7 @@ func (s *UserService) Register(dto dto.RegisterUser) (models.User, error) {
 func (s *UserService) Login(dto dto.LoginUser) (string, error) {
 	log.Debug().Msg("Logging in user")
 
-	var user models.User
-	err := s.DB.First(&user, "email = ?", dto.Email).Error
+	user, err := s.Repository.FindByEmail(dto.Email)
 	if err != nil {
 		return "", err
 	}
@@ -108,8 +103,7 @@ func (s *UserService) Login(dto dto.LoginUser) (string, error) {
 func (s *UserService) Update(dto dto.UpdateUser, id string) (models.User, error) {
 	log.Debug().Msg("Updating user")
 
-	var user models.User
-	err := s.DB.First(&user, "id = ?", id).Error
+	user, err := s.Repository.FindByID(id)
 	if err != nil {
 		return user, err
 	}
@@ -117,7 +111,7 @@ func (s *UserService) Update(dto dto.UpdateUser, id string) (models.User, error)
 	user.FirstName = dto.FirstName
 	user.LastName = dto.LastName
 
-	err = s.DB.Save(&user).Error
+	err = s.Repository.Update(&user)
 	if err != nil {
 		return user, err
 	}
