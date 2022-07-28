@@ -3,10 +3,22 @@ services:
     image: postgres:latest
     environment:
       POSTGRES_PASSWORD: password
+      POSTGRES_DB: rooms
     ports:
       - 5432:5432
     volumes:
       - postgres-db:/data/postgres
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+    networks:
+      - default
+    ports:
+      - "8080:8080"
 
 volumes:
   postgres-db:
