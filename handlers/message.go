@@ -14,16 +14,12 @@ type messageHandler struct {
 	service services.IMessageService
 }
 
-func newMessageHandler() handler {
-	return &messageHandler{
+func routeMessageHandler(router *gin.RouterGroup) {
+	h := &messageHandler{
 		service: services.GetMessageService(),
 	}
-}
-
-func (h *messageHandler) route(router *gin.RouterGroup) {
 
 	r := router.Group("/messages").Use(middleware.JwtAuth())
-
 	r.GET("/:room_id", h.find)
 	r.POST("/:room_id", h.create)
 	r.PUT("/:id", h.update)

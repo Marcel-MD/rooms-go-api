@@ -13,13 +13,10 @@ type userHandler struct {
 	service services.IUserService
 }
 
-func newUserHandler() handler {
-	return &userHandler{
+func routeUserHandler(router *gin.RouterGroup) {
+	h := &userHandler{
 		service: services.GetUserService(),
 	}
-}
-
-func (h *userHandler) route(router *gin.RouterGroup) {
 
 	r := router.Group("/users")
 	r.POST("/register", h.register)

@@ -15,14 +15,12 @@ type roomHandler struct {
 	manager websockets.IManager
 }
 
-func newRoomHandler() handler {
-	return &roomHandler{
+func routeRoomHandler(router *gin.RouterGroup) {
+	h := &roomHandler{
 		service: services.GetRoomService(),
 		manager: websockets.GetManager(),
 	}
-}
 
-func (h *roomHandler) route(router *gin.RouterGroup) {
 	r := router.Group("/rooms")
 	r.GET("/", h.findAll)
 	r.GET("/:id", h.findOne)

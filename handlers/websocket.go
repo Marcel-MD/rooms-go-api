@@ -14,14 +14,12 @@ type webSocketHandler struct {
 	manager websockets.IManager
 }
 
-func newWebSocketHandler() handler {
-	return &webSocketHandler{
+func routeWebSocketHandler(router *gin.RouterGroup) {
+	h := &webSocketHandler{
 		service: services.GetMessageService(),
 		manager: websockets.GetManager(),
 	}
-}
 
-func (h *webSocketHandler) route(router *gin.RouterGroup) {
 	r := router.Group("/ws").Use(middleware.JwtAuth())
 	r.GET("/:room_id", h.connect)
 }
