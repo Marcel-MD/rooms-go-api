@@ -6,19 +6,16 @@ import (
 	"github.com/Marcel-MD/rooms-go-api/dto"
 	"github.com/Marcel-MD/rooms-go-api/middleware"
 	"github.com/Marcel-MD/rooms-go-api/services"
-	"github.com/Marcel-MD/rooms-go-api/websockets"
 	"github.com/gin-gonic/gin"
 )
 
 type roomHandler struct {
 	service services.IRoomService
-	manager websockets.IManager
 }
 
 func routeRoomHandler(router *gin.RouterGroup) {
 	h := &roomHandler{
 		service: services.GetRoomService(),
-		manager: websockets.GetManager(),
 	}
 
 	r := router.Group("/rooms")
@@ -99,7 +96,6 @@ func (h *roomHandler) delete(c *gin.Context) {
 		return
 	}
 
-	h.manager.DisconnectRoom(id)
 	c.JSON(http.StatusOK, gin.H{"message": "room deleted"})
 }
 
@@ -128,6 +124,5 @@ func (h *roomHandler) removeUser(c *gin.Context) {
 		return
 	}
 
-	h.manager.DisconnectUserFromRoom(removeUserID, roomID)
 	c.JSON(http.StatusOK, gin.H{"message": "user removed"})
 }
