@@ -10,12 +10,14 @@ import (
 )
 
 type roomHandler struct {
-	service services.IRoomService
+	service        services.IRoomService
+	messageService services.IMessageService
 }
 
 func routeRoomHandler(router *gin.RouterGroup) {
 	h := &roomHandler{
-		service: services.GetRoomService(),
+		service:        services.GetRoomService(),
+		messageService: services.GetMessageService(),
 	}
 
 	r := router.Group("/rooms")
@@ -26,7 +28,7 @@ func routeRoomHandler(router *gin.RouterGroup) {
 	p.POST("/", h.create)
 	p.PUT("/:id", h.update)
 	p.DELETE("/:id", h.delete)
-	p.POST("/:id/users/:email", h.addUser)
+	p.POST("/:id/users/:user_id", h.addUser)
 	p.DELETE("/:id/users/:user_id", h.removeUser)
 }
 
@@ -101,16 +103,22 @@ func (h *roomHandler) delete(c *gin.Context) {
 
 func (h *roomHandler) addUser(c *gin.Context) {
 	id := c.Param("id")
-	email := c.Param("email")
+	addUserID := c.Param("user_id")
 	userID := c.GetString("user_id")
 
-	err := h.service.AddUser(id, email, userID)
+	err := h.service.AddUser(id, addUserID, userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "user added"})
+	message, err := h.messageService.CreateAddUser(id, addUserID, userID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, message)
 }
 
 func (h *roomHandler) removeUser(c *gin.Context) {
@@ -124,5 +132,11 @@ func (h *roomHandler) removeUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "user removed"})
+	message, err := h.messageService.CreateRemoveUser(roomID, removeUserID, userID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, message)
 }

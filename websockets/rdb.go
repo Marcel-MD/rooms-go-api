@@ -25,6 +25,8 @@ func initRDB() {
 			log.Fatal().Err(err).Msg("Failed to parse redis connection string")
 		}
 
+		opt.ReadTimeout = -1 // temporary fix until issue is resolved
+
 		rdb = redis.NewClient(opt)
 		ctx = context.Background()
 
