@@ -2,8 +2,8 @@ package models
 
 type User struct {
 	Base
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
 	Email     string `json:"email" gorm:"uniqueIndex"`
 	Password  string `json:"-"`
 

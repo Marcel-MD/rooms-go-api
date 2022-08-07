@@ -10,14 +10,14 @@ import (
 )
 
 type webSocketHandler struct {
-	service services.IMessageService
-	manager websockets.IManager
+	service services.IRoomService
+	server  websockets.IServer
 }
 
 func routeWebSocketHandler(router *gin.RouterGroup) {
 	h := &webSocketHandler{
-		service: services.GetMessageService(),
-		manager: websockets.GetManager(),
+		service: services.GetRoomService(),
+		server:  websockets.GetServer(),
 	}
 
 	r := router.Group("/ws").Use(middleware.JwtAuth())
@@ -34,5 +34,9 @@ func (h *webSocketHandler) connect(c *gin.Context) {
 		return
 	}
 
-	h.manager.ServeWs(c.Writer, c.Request, roomID, userID)
+	err = h.server.ServeWS(c.Writer, c.Request, roomID, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 }

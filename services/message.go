@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/Marcel-MD/rooms-go-api/dto"
@@ -13,9 +14,10 @@ import (
 type IMessageService interface {
 	FindByRoomID(roomID, userID string, params dto.MessageQueryParams) ([]models.Message, error)
 	Create(roomID, userID string, dto dto.CreateMessage) (models.Message, error)
-	Update(id, userID string, dto dto.UpdateMessage) (models.Message, error)
-	Delete(id, userID string) error
-	VerifyUserInRoom(roomID, userID string) error
+	Update(messageID, userID string, dto dto.UpdateMessage) (models.Message, error)
+	Delete(messageID, userID string) (models.Message, error)
+	CreateRemoveUser(roomID, removeUserID, userID string) (models.Message, error)
+	CreateAddUser(roomID, addUserID, userID string) (models.Message, error)
 }
 
 type MessageService struct {
@@ -46,7 +48,7 @@ func (s *MessageService) FindByRoomID(roomID, userID string, params dto.MessageQ
 
 	var messages []models.Message
 
-	err := s.VerifyUserInRoom(roomID, userID)
+	err := s.RoomRepository.VerifyUserInRoom(roomID, userID)
 	if err != nil {
 		return messages, err
 	}
@@ -60,7 +62,7 @@ func (s *MessageService) Create(roomID, userID string, dto dto.CreateMessage) (m
 	log.Debug().Str("room_id", roomID).Str("user_id", userID).Msg("Creating message")
 
 	var message models.Message
-	err := s.VerifyUserInRoom(roomID, userID)
+	err := s.RoomRepository.VerifyUserInRoom(roomID, userID)
 	if err != nil {
 		return message, err
 	}
@@ -73,6 +75,8 @@ func (s *MessageService) Create(roomID, userID string, dto dto.CreateMessage) (m
 	message.Text = dto.Text
 	message.RoomID = roomID
 	message.UserID = userID
+	message.Command = models.Create
+	message.TargetID = roomID
 
 	err = s.MessageRepository.Create(&message)
 	if err != nil {
@@ -84,10 +88,10 @@ func (s *MessageService) Create(roomID, userID string, dto dto.CreateMessage) (m
 	return message, nil
 }
 
-func (s *MessageService) Update(id, userID string, dto dto.UpdateMessage) (models.Message, error) {
-	log.Debug().Str("id", id).Str("user_id", userID).Msg("Updating message")
+func (s *MessageService) Update(messageID, userID string, dto dto.UpdateMessage) (models.Message, error) {
+	log.Debug().Str("id", messageID).Str("user_id", userID).Msg("Updating message")
 
-	message, err := s.MessageRepository.FindByID(id)
+	message, err := s.MessageRepository.FindByID(messageID)
 	if err != nil {
 		return message, err
 	}
@@ -97,6 +101,8 @@ func (s *MessageService) Update(id, userID string, dto dto.UpdateMessage) (model
 	}
 
 	message.Text = dto.Text
+	message.Command = models.Update
+	message.TargetID = messageID
 
 	err = s.MessageRepository.Update(&message)
 	if err != nil {
@@ -106,39 +112,74 @@ func (s *MessageService) Update(id, userID string, dto dto.UpdateMessage) (model
 	return message, nil
 }
 
-func (s *MessageService) Delete(id, userID string) error {
-	log.Debug().Str("id", id).Str("user_id", userID).Msg("Deleting message")
+func (s *MessageService) Delete(messageID, userID string) (models.Message, error) {
+	log.Debug().Str("id", messageID).Str("user_id", userID).Msg("Deleting message")
 
-	message, err := s.MessageRepository.FindByID(id)
+	message, err := s.MessageRepository.FindByID(messageID)
 	if err != nil {
-		return err
+		return message, err
 	}
 
 	if message.UserID != userID {
-		return errors.New("you are not allowed to delete this message")
+		return message, errors.New("you are not allowed to delete this message")
 	}
 
-	err = s.MessageRepository.Delete(&message)
+	message.Text = ""
+	message.Command = models.Delete
+	message.TargetID = messageID
+
+	err = s.MessageRepository.Update(&message)
 	if err != nil {
-		return err
+		return message, err
 	}
 
-	return nil
+	return message, nil
 }
 
-func (s *MessageService) VerifyUserInRoom(roomID, userID string) error {
-	log.Debug().Str("room_id", roomID).Str("user_id", userID).Msg("Verifying user in room")
+func (s *MessageService) CreateRemoveUser(roomID, removeUserID, userID string) (models.Message, error) {
+	log.Debug().Str("room_id", roomID).Str("user_id", removeUserID).Msg("Creating remove user message")
 
-	room, err := s.RoomRepository.FindByIdWithUsers(roomID)
+	var message models.Message
+
+	removeUser, err := s.UserRepository.FindByID(removeUserID)
 	if err != nil {
-		return err
+		return message, err
 	}
 
-	for _, user := range room.Users {
-		if user.ID == userID {
-			return nil
-		}
+	message.Text = fmt.Sprintf("%s left the room", removeUser.FirstName)
+	message.RoomID = roomID
+	message.UserID = userID
+	message.Command = models.RemoveUser
+	message.TargetID = removeUserID
+
+	err = s.MessageRepository.Create(&message)
+	if err != nil {
+		return message, err
 	}
 
-	return errors.New("user is not in room")
+	return message, nil
+}
+
+func (s *MessageService) CreateAddUser(roomID, addUserID, userID string) (models.Message, error) {
+	log.Debug().Str("room_id", roomID).Str("user_id", addUserID).Msg("Creating add user message")
+
+	var message models.Message
+
+	addUser, err := s.UserRepository.FindByID(addUserID)
+	if err != nil {
+		return message, err
+	}
+
+	message.Text = fmt.Sprintf("%s joined the room", addUser.FirstName)
+	message.RoomID = roomID
+	message.UserID = userID
+	message.Command = models.AddUser
+	message.TargetID = addUserID
+
+	err = s.MessageRepository.Create(&message)
+	if err != nil {
+		return message, err
+	}
+
+	return message, nil
 }

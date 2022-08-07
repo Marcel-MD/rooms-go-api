@@ -6,19 +6,18 @@ import (
 	"github.com/Marcel-MD/rooms-go-api/dto"
 	"github.com/Marcel-MD/rooms-go-api/middleware"
 	"github.com/Marcel-MD/rooms-go-api/services"
-	"github.com/Marcel-MD/rooms-go-api/websockets"
 	"github.com/gin-gonic/gin"
 )
 
 type roomHandler struct {
-	service services.IRoomService
-	manager websockets.IManager
+	service        services.IRoomService
+	messageService services.IMessageService
 }
 
 func routeRoomHandler(router *gin.RouterGroup) {
 	h := &roomHandler{
-		service: services.GetRoomService(),
-		manager: websockets.GetManager(),
+		service:        services.GetRoomService(),
+		messageService: services.GetMessageService(),
 	}
 
 	r := router.Group("/rooms")
@@ -29,7 +28,7 @@ func routeRoomHandler(router *gin.RouterGroup) {
 	p.POST("/", h.create)
 	p.PUT("/:id", h.update)
 	p.DELETE("/:id", h.delete)
-	p.POST("/:id/users/:email", h.addUser)
+	p.POST("/:id/users/:user_id", h.addUser)
 	p.DELETE("/:id/users/:user_id", h.removeUser)
 }
 
@@ -99,22 +98,27 @@ func (h *roomHandler) delete(c *gin.Context) {
 		return
 	}
 
-	h.manager.DisconnectRoom(id)
 	c.JSON(http.StatusOK, gin.H{"message": "room deleted"})
 }
 
 func (h *roomHandler) addUser(c *gin.Context) {
-	id := c.Param("id")
-	email := c.Param("email")
+	roomID := c.Param("id")
+	addUserID := c.Param("user_id")
 	userID := c.GetString("user_id")
 
-	err := h.service.AddUser(id, email, userID)
+	err := h.service.AddUser(roomID, addUserID, userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "user added"})
+	message, err := h.messageService.CreateAddUser(roomID, addUserID, userID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, message)
 }
 
 func (h *roomHandler) removeUser(c *gin.Context) {
@@ -128,6 +132,11 @@ func (h *roomHandler) removeUser(c *gin.Context) {
 		return
 	}
 
-	h.manager.DisconnectUserFromRoom(removeUserID, roomID)
-	c.JSON(http.StatusOK, gin.H{"message": "user removed"})
+	message, err := h.messageService.CreateRemoveUser(roomID, removeUserID, userID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, message)
 }

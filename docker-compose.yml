@@ -9,12 +9,20 @@ services:
     volumes:
       - postgres-db:/data/postgres
 
+  redis:
+    image: bitnami/redis:latest
+    environment:
+      - REDIS_PASSWORD=password
+    ports:
+      - "6379:6379"
+
   server:
     build:
       context: .
       dockerfile: Dockerfile
     depends_on:
       - postgres
+      - redis
     networks:
       - default
     ports:
