@@ -34,5 +34,9 @@ func (h *webSocketHandler) connect(c *gin.Context) {
 		return
 	}
 
-	h.server.ServeWS(c.Writer, c.Request, roomID, userID)
+	err = h.server.ServeWS(c.Writer, c.Request, roomID, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 }

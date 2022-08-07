@@ -76,7 +76,7 @@ func (s *RoomService) Create(dto dto.CreateRoom, userID string) (models.Room, er
 		return room, err
 	}
 
-	err = s.AddUser(room.ID, user.Email, userID)
+	err = s.AddUser(room.ID, user.ID, userID)
 	if err != nil {
 		return room, err
 	}

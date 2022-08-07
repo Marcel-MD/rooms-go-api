@@ -102,17 +102,17 @@ func (h *roomHandler) delete(c *gin.Context) {
 }
 
 func (h *roomHandler) addUser(c *gin.Context) {
-	id := c.Param("id")
+	roomID := c.Param("id")
 	addUserID := c.Param("user_id")
 	userID := c.GetString("user_id")
 
-	err := h.service.AddUser(id, addUserID, userID)
+	err := h.service.AddUser(roomID, addUserID, userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	message, err := h.messageService.CreateAddUser(id, addUserID, userID)
+	message, err := h.messageService.CreateAddUser(roomID, addUserID, userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

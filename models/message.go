@@ -6,6 +6,7 @@ const (
 	Delete     = "Delete"
 	RemoveUser = "RemoveUser"
 	AddUser    = "AddUser"
+	Error      = "Error"
 )
 
 type Message struct {

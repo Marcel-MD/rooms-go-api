@@ -25,7 +25,7 @@ var upgrader = websocket.Upgrader{
 }
 
 type IServer interface {
-	ServeWS(w http.ResponseWriter, r *http.Request, roomID, userID string)
+	ServeWS(w http.ResponseWriter, r *http.Request, roomID, userID string) error
 }
 
 type wsServer struct{}
@@ -44,23 +44,24 @@ func GetServer() IServer {
 	return server
 }
 
-// ServeWs handles websocket requests from the peer.
-func (m *wsServer) ServeWS(w http.ResponseWriter, r *http.Request, roomID, userID string) {
+func (m *wsServer) ServeWS(w http.ResponseWriter, r *http.Request, roomID, userID string) error {
 	log.Info().Str("room_id", roomID).Str("user_id", userID).Msg("New websocket connection")
 
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Error().Err(err).Str("room_id", roomID).Str("user_id", userID).Msg("Failed to upgrade websocket connection")
-		return
+		return err
 	}
 
 	s, err := connect(userID, roomID, ws)
 	if err != nil {
 		log.Error().Err(err).Str("room_id", roomID).Str("user_id", userID).Msg("Failed to connect to room")
 		ws.Close()
-		return
+		return err
 	}
 
 	go s.writePump()
 	go s.readPump()
+
+	return nil
 }
