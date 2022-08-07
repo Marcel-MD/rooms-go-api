@@ -19,6 +19,8 @@ func (s subscription) handleMessage(msg dto.WebSocketMessage) error {
 		return s.handleRemoveUser(msg)
 	case models.AddUser:
 		return s.handleAddUser(msg)
+	case models.DeleteRoom:
+		return s.handleDeleteRoom(msg)
 	default:
 		return errors.New("invalid message command")
 	}
@@ -87,6 +89,24 @@ func (s subscription) handleAddUser(msg dto.WebSocketMessage) error {
 	m, err := s.messageService.CreateAddUser(s.roomID, msg.TargetID, s.userID)
 	if err != nil {
 		return err
+	}
+
+	return s.broadcast(m)
+}
+
+func (s subscription) handleDeleteRoom(msg dto.WebSocketMessage) error {
+
+	err := s.roomService.Delete(s.roomID, s.userID)
+	if err != nil {
+		return err
+	}
+
+	m := models.Message{
+		Text:     "Room deleted",
+		RoomID:   s.roomID,
+		UserID:   s.userID,
+		Command:  models.DeleteRoom,
+		TargetID: s.roomID,
 	}
 
 	return s.broadcast(m)

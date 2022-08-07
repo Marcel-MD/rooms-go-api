@@ -95,6 +95,12 @@ func (s *subscription) writePump() {
 				return
 			}
 
+			if message.Command == models.DeleteRoom && message.TargetID == s.roomID {
+				log.Info().Str("user_id", s.userID).Str("room_id", s.roomID).Msg("Room deleted")
+				s.write(websocket.CloseMessage, []byte{})
+				return
+			}
+
 			if err := s.writeJSON(message); err != nil {
 				log.Err(err).Str("user_id", s.userID).Str("room_id", s.roomID).Msg("Failed to write message")
 				s.write(websocket.CloseMessage, []byte{})

@@ -6,6 +6,7 @@ const (
 	Delete     = "Delete"
 	RemoveUser = "RemoveUser"
 	AddUser    = "AddUser"
+	DeleteRoom = "DeleteRoom"
 	Error      = "Error"
 )
 
