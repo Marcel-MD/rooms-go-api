@@ -2,7 +2,7 @@
 
 ## Description
 
-Simple multi-room chat application developed with [Gin](https://gin-gonic.com/), [GORM](https://gorm.io/index.html) and [Gorilla WebSocket](https://pkg.go.dev/github.com/gorilla/websocket).\
+Multi-room chat application developed with [Gin](https://gin-gonic.com/), [GORM](https://gorm.io/index.html), [Go Redis](https://redis.uptrace.dev/) and [Gorilla WebSocket](https://pkg.go.dev/github.com/gorilla/websocket).\
 Work in progress...
 
 ## Environment Variables
