@@ -37,16 +37,12 @@ func GetUserRepository() IUserRepository {
 }
 
 func (r *UserRepository) FindAll() []models.User {
-	log.Debug().Msg("Finding all users")
-
 	var users []models.User
 	r.DB.Find(&users)
 	return users
 }
 
 func (r *UserRepository) FindByID(id string) (models.User, error) {
-	log.Debug().Str("id", id).Msg("Finding user")
-
 	var user models.User
 	err := r.DB.First(&user, "id = ?", id).Error
 
@@ -54,8 +50,6 @@ func (r *UserRepository) FindByID(id string) (models.User, error) {
 }
 
 func (r *UserRepository) FindByIdWithRooms(id string) (models.User, error) {
-	log.Debug().Str("id", id).Msg("Finding user")
-
 	var user models.User
 	err := r.DB.Model(&models.User{}).Preload("Rooms").First(&user, "id = ?", id).Error
 
@@ -63,8 +57,6 @@ func (r *UserRepository) FindByIdWithRooms(id string) (models.User, error) {
 }
 
 func (r *UserRepository) FindByEmail(email string) (models.User, error) {
-	log.Debug().Str("email", email).Msg("Finding user")
-
 	var user models.User
 	err := r.DB.First(&user, "email = ?", email).Error
 
@@ -72,13 +64,9 @@ func (r *UserRepository) FindByEmail(email string) (models.User, error) {
 }
 
 func (r *UserRepository) Create(user *models.User) error {
-	log.Debug().Msg("Creating user")
-
 	return r.DB.Create(user).Error
 }
 
 func (r *UserRepository) Update(user *models.User) error {
-	log.Debug().Msg("Updating user")
-
 	return r.DB.Save(user).Error
 }

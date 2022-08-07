@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/Marcel-MD/rooms-go-api/models"
@@ -17,6 +18,7 @@ type IRoomRepository interface {
 	Delete(room *models.Room) error
 	AddUser(room *models.Room, user *models.User) error
 	RemoveUser(room *models.Room, user *models.User) error
+	VerifyUserInRoom(roomID, userID string) error
 }
 
 type RoomRepository struct {
@@ -39,16 +41,12 @@ func GetRoomRepository() IRoomRepository {
 }
 
 func (r *RoomRepository) FindAll() []models.Room {
-	log.Debug().Msg("Finding all rooms")
-
 	var rooms []models.Room
 	r.DB.Find(&rooms)
 	return rooms
 }
 
 func (r *RoomRepository) FindByID(id string) (models.Room, error) {
-	log.Debug().Str("id", id).Msg("Finding room")
-
 	var room models.Room
 	err := r.DB.First(&room, "id = ?", id).Error
 
@@ -56,8 +54,6 @@ func (r *RoomRepository) FindByID(id string) (models.Room, error) {
 }
 
 func (r *RoomRepository) FindByIdWithUsers(id string) (models.Room, error) {
-	log.Debug().Str("id", id).Msg("Finding room")
-
 	var room models.Room
 	err := r.DB.Model(&models.Room{}).Preload("Users").First(&room, "id = ?", id).Error
 
@@ -65,31 +61,37 @@ func (r *RoomRepository) FindByIdWithUsers(id string) (models.Room, error) {
 }
 
 func (r *RoomRepository) Create(room *models.Room) error {
-	log.Debug().Msg("Creating room")
-
 	return r.DB.Create(room).Error
 }
 
 func (r *RoomRepository) Update(room *models.Room) error {
-	log.Debug().Msg("Updating room")
-
 	return r.DB.Save(room).Error
 }
 
 func (r *RoomRepository) Delete(room *models.Room) error {
-	log.Debug().Msg("Deleting room")
-
 	return r.DB.Delete(room).Error
 }
 
 func (r *RoomRepository) AddUser(room *models.Room, user *models.User) error {
-	log.Debug().Msg("Adding user to room")
-
 	return r.DB.Model(room).Omit("Users.*").Association("Users").Append(user)
 }
 
 func (r *RoomRepository) RemoveUser(room *models.Room, user *models.User) error {
-	log.Debug().Msg("Removing user from room")
-
 	return r.DB.Model(room).Association("Users").Delete(user)
+}
+
+func (r *RoomRepository) VerifyUserInRoom(roomID, userID string) error {
+	var room models.Room
+	err := r.DB.Model(&models.Room{}).Preload("Users").First(&room, "id = ?", roomID).Error
+	if err != nil {
+		return err
+	}
+
+	for _, user := range room.Users {
+		if user.ID == userID {
+			return nil
+		}
+	}
+
+	return errors.New("user is not in room")
 }

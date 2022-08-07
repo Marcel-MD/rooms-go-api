@@ -16,7 +16,6 @@ type IMessageService interface {
 	Create(roomID, userID string, dto dto.CreateMessage) (models.Message, error)
 	Update(messageID, userID string, dto dto.UpdateMessage) (models.Message, error)
 	Delete(messageID, userID string) (models.Message, error)
-	VerifyUserInRoom(roomID, userID string) error
 	CreateRemoveUser(roomID, removeUserID, userID string) (models.Message, error)
 	CreateAddUser(roomID, addUserID, userID string) (models.Message, error)
 }
@@ -49,7 +48,7 @@ func (s *MessageService) FindByRoomID(roomID, userID string, params dto.MessageQ
 
 	var messages []models.Message
 
-	err := s.VerifyUserInRoom(roomID, userID)
+	err := s.RoomRepository.VerifyUserInRoom(roomID, userID)
 	if err != nil {
 		return messages, err
 	}
@@ -63,7 +62,7 @@ func (s *MessageService) Create(roomID, userID string, dto dto.CreateMessage) (m
 	log.Debug().Str("room_id", roomID).Str("user_id", userID).Msg("Creating message")
 
 	var message models.Message
-	err := s.VerifyUserInRoom(roomID, userID)
+	err := s.RoomRepository.VerifyUserInRoom(roomID, userID)
 	if err != nil {
 		return message, err
 	}
@@ -135,23 +134,6 @@ func (s *MessageService) Delete(messageID, userID string) (models.Message, error
 	}
 
 	return message, nil
-}
-
-func (s *MessageService) VerifyUserInRoom(roomID, userID string) error {
-	log.Debug().Str("room_id", roomID).Str("user_id", userID).Msg("Verifying user in room")
-
-	room, err := s.RoomRepository.FindByIdWithUsers(roomID)
-	if err != nil {
-		return err
-	}
-
-	for _, user := range room.Users {
-		if user.ID == userID {
-			return nil
-		}
-	}
-
-	return errors.New("user is not in room")
 }
 
 func (s *MessageService) CreateRemoveUser(roomID, removeUserID, userID string) (models.Message, error) {

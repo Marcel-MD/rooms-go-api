@@ -10,13 +10,13 @@ import (
 )
 
 type webSocketHandler struct {
-	service services.IMessageService
+	service services.IRoomService
 	server  websockets.IServer
 }
 
 func routeWebSocketHandler(router *gin.RouterGroup) {
 	h := &webSocketHandler{
-		service: services.GetMessageService(),
+		service: services.GetRoomService(),
 		server:  websockets.GetServer(),
 	}
 

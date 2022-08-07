@@ -36,8 +36,6 @@ func GetMessageRepository() IMessageRepository {
 }
 
 func (r *MessageRepository) FindByRoomID(roomID string, page, size int) []models.Message {
-	log.Debug().Str("room_id", roomID).Msg("Finding messages")
-
 	var messages []models.Message
 
 	r.DB.Scopes(models.Paginate(page, size)).Model(&models.Message{}).
@@ -47,8 +45,6 @@ func (r *MessageRepository) FindByRoomID(roomID string, page, size int) []models
 }
 
 func (r *MessageRepository) FindByID(id string) (models.Message, error) {
-	log.Debug().Str("id", id).Msg("Finding message")
-
 	var message models.Message
 	err := r.DB.First(&message, "id = ?", id).Error
 
@@ -56,19 +52,13 @@ func (r *MessageRepository) FindByID(id string) (models.Message, error) {
 }
 
 func (r *MessageRepository) Create(message *models.Message) error {
-	log.Debug().Msg("Creating message")
-
 	return r.DB.Create(message).Error
 }
 
 func (r *MessageRepository) Update(message *models.Message) error {
-	log.Debug().Msg("Updating message")
-
 	return r.DB.Save(message).Error
 }
 
 func (r *MessageRepository) Delete(message *models.Message) error {
-	log.Debug().Msg("Deleting message")
-
 	return r.DB.Delete(message).Error
 }

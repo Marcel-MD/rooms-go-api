@@ -18,6 +18,7 @@ type IRoomService interface {
 	Delete(roomID, userID string) error
 	AddUser(roomID, addUserID, userID string) error
 	RemoveUser(roomID, removeUserID, userID string) error
+	VerifyUserInRoom(roomID, userID string) error
 }
 
 type RoomService struct {
@@ -129,6 +130,11 @@ func (s *RoomService) Delete(roomID, userID string) error {
 func (s *RoomService) AddUser(roomID, addUserID, userID string) error {
 	log.Debug().Str("id", roomID).Msg("Adding user to room")
 
+	err := s.RoomRepository.VerifyUserInRoom(roomID, addUserID)
+	if err == nil {
+		return errors.New("user already in this room")
+	}
+
 	room, err := s.RoomRepository.FindByID(roomID)
 	if err != nil {
 		return err
@@ -154,6 +160,11 @@ func (s *RoomService) AddUser(roomID, addUserID, userID string) error {
 func (s *RoomService) RemoveUser(roomID, removeUserID, userID string) error {
 	log.Debug().Str("room_id", roomID).Str("user_id", removeUserID).Msg("Removing user from room")
 
+	err := s.RoomRepository.VerifyUserInRoom(roomID, removeUserID)
+	if err != nil {
+		return err
+	}
+
 	room, err := s.RoomRepository.FindByID(roomID)
 	if err != nil {
 		return err
@@ -178,4 +189,9 @@ func (s *RoomService) RemoveUser(roomID, removeUserID, userID string) error {
 	}
 
 	return nil
+}
+
+func (s *RoomService) VerifyUserInRoom(roomID, userID string) error {
+	log.Debug().Str("room_id", roomID).Str("user_id", userID).Msg("Verifying user in room")
+	return s.RoomRepository.VerifyUserInRoom(roomID, userID)
 }
