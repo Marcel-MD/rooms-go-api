@@ -1,9 +1,9 @@
 package models
 
 const (
-	Create     = "Create"
-	Update     = "Update"
-	Delete     = "Delete"
+	Create     = "CreateMessage"
+	Update     = "UpdateMessage"
+	Delete     = "DeleteMessage"
 	RemoveUser = "RemoveUser"
 	AddUser    = "AddUser"
 	DeleteRoom = "DeleteRoom"
