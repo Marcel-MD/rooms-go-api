@@ -1,13 +1,13 @@
 package models
 
 const (
-	Create     = "CreateMessage"
-	Update     = "UpdateMessage"
-	Delete     = "DeleteMessage"
-	RemoveUser = "RemoveUser"
-	AddUser    = "AddUser"
-	DeleteRoom = "DeleteRoom"
-	Error      = "Error"
+	CreateMessage = "CreateMessage"
+	UpdateMessage = "UpdateMessage"
+	DeleteMessage = "DeleteMessage"
+	RemoveUser    = "RemoveUser"
+	AddUser       = "AddUser"
+	DeleteRoom    = "DeleteRoom"
+	Error         = "Error"
 )
 
 type Message struct {

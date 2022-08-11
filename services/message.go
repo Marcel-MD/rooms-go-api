@@ -75,7 +75,7 @@ func (s *MessageService) Create(roomID, userID string, dto dto.CreateMessage) (m
 	message.Text = dto.Text
 	message.RoomID = roomID
 	message.UserID = userID
-	message.Command = models.Create
+	message.Command = models.CreateMessage
 	message.TargetID = roomID
 
 	err = s.MessageRepository.Create(&message)
@@ -101,7 +101,7 @@ func (s *MessageService) Update(messageID, userID string, dto dto.UpdateMessage)
 	}
 
 	message.Text = dto.Text
-	message.Command = models.Update
+	message.Command = models.UpdateMessage
 	message.TargetID = messageID
 
 	err = s.MessageRepository.Update(&message)
@@ -125,7 +125,7 @@ func (s *MessageService) Delete(messageID, userID string) (models.Message, error
 	}
 
 	message.Text = ""
-	message.Command = models.Delete
+	message.Command = models.DeleteMessage
 	message.TargetID = messageID
 
 	err = s.MessageRepository.Update(&message)

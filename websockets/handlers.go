@@ -9,12 +9,12 @@ import (
 
 func (s subscription) handleMessage(msg dto.WebSocketMessage) error {
 	switch msg.Command {
-	case models.Create:
-		return s.handleCreate(msg)
-	case models.Update:
-		return s.handleUpdate(msg)
-	case models.Delete:
-		return s.handleDelete(msg)
+	case models.CreateMessage:
+		return s.handleCreateMessage(msg)
+	case models.UpdateMessage:
+		return s.handleUpdateMessage(msg)
+	case models.DeleteMessage:
+		return s.handleDeleteMessage(msg)
 	case models.RemoveUser:
 		return s.handleRemoveUser(msg)
 	case models.AddUser:
@@ -26,7 +26,7 @@ func (s subscription) handleMessage(msg dto.WebSocketMessage) error {
 	}
 }
 
-func (s subscription) handleCreate(msg dto.WebSocketMessage) error {
+func (s subscription) handleCreateMessage(msg dto.WebSocketMessage) error {
 
 	dto := dto.CreateMessage{
 		Text: msg.Text,
@@ -40,7 +40,7 @@ func (s subscription) handleCreate(msg dto.WebSocketMessage) error {
 	return s.broadcast(m)
 }
 
-func (s subscription) handleUpdate(msg dto.WebSocketMessage) error {
+func (s subscription) handleUpdateMessage(msg dto.WebSocketMessage) error {
 
 	dto := dto.UpdateMessage{
 		Text: msg.Text,
@@ -54,7 +54,7 @@ func (s subscription) handleUpdate(msg dto.WebSocketMessage) error {
 	return s.broadcast(m)
 }
 
-func (s subscription) handleDelete(msg dto.WebSocketMessage) error {
+func (s subscription) handleDeleteMessage(msg dto.WebSocketMessage) error {
 
 	m, err := s.messageService.Delete(msg.TargetID, s.userID)
 	if err != nil {
