@@ -18,6 +18,8 @@ type IMessageService interface {
 	Delete(messageID, userID string) (models.Message, error)
 	CreateRemoveUser(roomID, removeUserID, userID string) (models.Message, error)
 	CreateAddUser(roomID, addUserID, userID string) (models.Message, error)
+	CreateCreateRoom(roomID, userID string) (models.Message, error)
+	CreateUpdateRoom(roomID, userID string) (models.Message, error)
 }
 
 type MessageService struct {
@@ -177,6 +179,44 @@ func (s *MessageService) CreateAddUser(roomID, addUserID, userID string) (models
 	message.TargetID = addUserID
 
 	err = s.MessageRepository.Create(&message)
+	if err != nil {
+		return message, err
+	}
+
+	return message, nil
+}
+
+func (s *MessageService) CreateCreateRoom(roomID, userID string) (models.Message, error) {
+	log.Debug().Str("room_id", roomID).Str("user_id", userID).Msg("Creating create room message")
+
+	var message models.Message
+
+	message.Text = "Room created"
+	message.RoomID = roomID
+	message.UserID = userID
+	message.Command = models.CreateRoom
+	message.TargetID = roomID
+
+	err := s.MessageRepository.Create(&message)
+	if err != nil {
+		return message, err
+	}
+
+	return message, nil
+}
+
+func (s *MessageService) CreateUpdateRoom(roomID, userID string) (models.Message, error) {
+	log.Debug().Str("room_id", roomID).Str("user_id", userID).Msg("Creating update room message")
+
+	var message models.Message
+
+	message.Text = "Room updated"
+	message.RoomID = roomID
+	message.UserID = userID
+	message.Command = models.UpdateRoom
+	message.TargetID = roomID
+
+	err := s.MessageRepository.Create(&message)
 	if err != nil {
 		return message, err
 	}

@@ -13,7 +13,7 @@ import (
 
 type subscription struct {
 	userID         string
-	roomID         string
+	rooms          []string
 	pubsub         *redis.PubSub
 	ws             *websocket.Conn
 	close          chan struct{}
@@ -22,18 +22,17 @@ type subscription struct {
 	roomService    services.IRoomService
 }
 
-func connect(userID, roomID string, ws *websocket.Conn) (*subscription, error) {
-	var s *subscription
+func connect(userID string, rooms []string, ws *websocket.Conn) (*subscription, error) {
 
-	pubsub := rdb.Subscribe(ctx, roomID)
+	pubsub := rdb.Subscribe(ctx, rooms...)
 	err := pubsub.Ping(ctx)
 	if err != nil {
-		return s, err
+		return nil, err
 	}
 
-	s = &subscription{
+	s := &subscription{
 		userID:         userID,
-		roomID:         roomID,
+		rooms:          rooms,
 		pubsub:         pubsub,
 		ws:             ws,
 		close:          make(chan struct{}),
@@ -48,27 +47,27 @@ func connect(userID, roomID string, ws *websocket.Conn) (*subscription, error) {
 }
 
 func (s *subscription) listen() {
-	log.Info().Str("user_id", s.userID).Str("room_id", s.roomID).Msg("User listening to room")
+	log.Info().Str("user_id", s.userID).Msg("User listening to rooms")
 
 	for {
 		select {
 		case msg, ok := <-s.pubsub.Channel():
 			if !ok {
-				log.Warn().Str("user_id", s.userID).Str("room_id", s.roomID).Msg("Pubsub channel closed")
+				log.Warn().Str("user_id", s.userID).Msg("Pubsub channel closed")
 				return
 			}
 
 			var m models.Message
 			err := json.Unmarshal([]byte(msg.Payload), &m)
 			if err != nil {
-				log.Err(err).Str("user_id", s.userID).Str("room_id", s.roomID).Msg("Failed to unmarshal message")
+				log.Err(err).Str("user_id", s.userID).Msg("Failed to unmarshal message")
 				continue
 			}
 
 			s.send <- m
 
 		case <-s.close:
-			log.Info().Str("user_id", s.userID).Str("room_id", s.roomID).Msg("User stopped listening to room")
+			log.Info().Str("user_id", s.userID).Msg("User stopped listening to rooms")
 			return
 		}
 	}
@@ -94,11 +93,62 @@ func (s *subscription) disconnect() error {
 	return nil
 }
 
+func (s *subscription) reconnect() error {
+	log.Info().Str("user_id", s.userID).Msg("User reconnecting to rooms")
+
+	if err := s.pubsub.Unsubscribe(ctx); err != nil {
+		return err
+	}
+
+	if err := s.pubsub.Close(); err != nil {
+		return err
+	}
+
+	s.close <- struct{}{}
+
+	pubsub := rdb.Subscribe(ctx, s.rooms...)
+	err := pubsub.Ping(ctx)
+	if err != nil {
+		return err
+	}
+
+	s.pubsub = pubsub
+
+	go s.listen()
+
+	return nil
+}
+
+func (s *subscription) addRoom(room string) error {
+	s.rooms = append(s.rooms, room)
+	return s.reconnect()
+}
+
+func (s *subscription) removeRoom(room string) error {
+	for i, r := range s.rooms {
+		if r == room {
+			s.rooms = append(s.rooms[:i], s.rooms[i+1:]...)
+			break
+		}
+	}
+
+	return s.reconnect()
+}
+
 func (s *subscription) broadcast(message models.Message) error {
 	payload, err := json.Marshal(message)
 	if err != nil {
 		return err
 	}
 
-	return rdb.Publish(ctx, s.roomID, payload).Err()
+	return rdb.Publish(ctx, message.RoomID, payload).Err()
+}
+
+func (s *subscription) broadcastGlobally(message models.Message) error {
+	payload, err := json.Marshal(message)
+	if err != nil {
+		return err
+	}
+
+	return rdb.Publish(ctx, globalChannel, payload).Err()
 }

@@ -110,7 +110,7 @@ For authentication are used bearer tokens.
 
 - **WebSocket** `/api/ws`
 
-  - [GET] `/room_id` - Connect to room
+  - [GET] `/` - Connect to all user's rooms
 
 ## WebSocket
 
@@ -120,7 +120,8 @@ For authentication are used bearer tokens.
   {
     "text": "Hello World!",
     "command": "CreateMessage",
-    "targetId": "room_id"
+    "targetId": "room_id",
+    "roomId": "room_id"
   }
   ```
 
@@ -130,7 +131,8 @@ For authentication are used bearer tokens.
   {
     "text": "Goodbye World!",
     "command": "UpdateMessage",
-    "targetId": "message_id"
+    "targetId": "message_id",
+    "roomId": "room_id"
   }
   ```
 
@@ -138,9 +140,10 @@ For authentication are used bearer tokens.
 
   ```json
   {
-    "text": "Anything here!",
+    "text": "anything",
     "command": "DeleteMessage",
-    "targetId": "message_id"
+    "targetId": "message_id",
+    "roomId": "room_id"
   }
   ```
 
@@ -148,9 +151,10 @@ For authentication are used bearer tokens.
 
   ```json
   {
-    "text": "Anything here!",
+    "text": "anything",
     "command": "AddUser",
-    "targetId": "user_id"
+    "targetId": "user_id",
+    "roomId": "room_id"
   }
   ```
 
@@ -158,9 +162,32 @@ For authentication are used bearer tokens.
 
   ```json
   {
-    "text": "Anything here!",
+    "text": "anything",
     "command": "RemoveUser",
-    "targetId": "user_id"
+    "targetId": "user_id",
+    "roomId": "room_id"
+  }
+  ```
+
+- Create Room
+
+  ```json
+  {
+    "text": "Room Name",
+    "command": "CreateRoom",
+    "targetId": "anything",
+    "roomId": "anything"
+  }
+  ```
+
+- Update Room
+
+  ```json
+  {
+    "text": "New Room Name",
+    "command": "UpdateRoom",
+    "targetId": "room_id",
+    "roomId": "room_id"
   }
   ```
 
@@ -168,8 +195,9 @@ For authentication are used bearer tokens.
 
   ```json
   {
-    "text": "Anything here!",
+    "text": "anything",
     "command": "DeleteRoom",
-    "targetId": "room_id"
+    "targetId": "room_id",
+    "roomId": "room_id"
   }
   ```

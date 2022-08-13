@@ -19,6 +19,10 @@ func (s subscription) handleMessage(msg dto.WebSocketMessage) error {
 		return s.handleRemoveUser(msg)
 	case models.AddUser:
 		return s.handleAddUser(msg)
+	case models.CreateRoom:
+		return s.handleCreateRoom(msg)
+	case models.UpdateRoom:
+		return s.handleUpdateRoom(msg)
 	case models.DeleteRoom:
 		return s.handleDeleteRoom(msg)
 	default:
@@ -32,7 +36,7 @@ func (s subscription) handleCreateMessage(msg dto.WebSocketMessage) error {
 		Text: msg.Text,
 	}
 
-	m, err := s.messageService.Create(s.roomID, s.userID, dto)
+	m, err := s.messageService.Create(msg.RoomID, s.userID, dto)
 	if err != nil {
 		return err
 	}
@@ -66,12 +70,12 @@ func (s subscription) handleDeleteMessage(msg dto.WebSocketMessage) error {
 
 func (s subscription) handleRemoveUser(msg dto.WebSocketMessage) error {
 
-	err := s.roomService.RemoveUser(s.roomID, msg.TargetID, s.userID)
+	err := s.roomService.RemoveUser(msg.RoomID, msg.TargetID, s.userID)
 	if err != nil {
 		return err
 	}
 
-	m, err := s.messageService.CreateRemoveUser(s.roomID, msg.TargetID, s.userID)
+	m, err := s.messageService.CreateRemoveUser(msg.RoomID, msg.TargetID, s.userID)
 	if err != nil {
 		return err
 	}
@@ -81,12 +85,55 @@ func (s subscription) handleRemoveUser(msg dto.WebSocketMessage) error {
 
 func (s subscription) handleAddUser(msg dto.WebSocketMessage) error {
 
-	err := s.roomService.AddUser(s.roomID, msg.TargetID, s.userID)
+	err := s.roomService.AddUser(msg.RoomID, msg.TargetID, s.userID)
 	if err != nil {
 		return err
 	}
 
-	m, err := s.messageService.CreateAddUser(s.roomID, msg.TargetID, s.userID)
+	m, err := s.messageService.CreateAddUser(msg.RoomID, msg.TargetID, s.userID)
+	if err != nil {
+		return err
+	}
+
+	return s.broadcastGlobally(m)
+}
+
+func (s subscription) handleCreateRoom(msg dto.WebSocketMessage) error {
+
+	dto := dto.CreateRoom{
+		Name: msg.Text,
+	}
+
+	room, err := s.roomService.Create(dto, s.userID)
+	if err != nil {
+		return err
+	}
+
+	err = s.addRoom(room.ID)
+	if err != nil {
+		return err
+	}
+
+	m, err := s.messageService.CreateCreateRoom(room.ID, s.userID)
+	if err != nil {
+		return err
+	}
+
+	return s.broadcast(m)
+}
+
+func (s subscription) handleUpdateRoom(msg dto.WebSocketMessage) error {
+
+	dto := dto.UpdateRoom{
+		Name: msg.Text,
+	}
+
+	_, err := s.roomService.Update(msg.RoomID, s.userID, dto)
+	if err != nil {
+		return err
+	}
+
+	m, err := s.messageService.CreateUpdateRoom(msg.RoomID, s.userID)
 	if err != nil {
 		return err
 	}
@@ -96,17 +143,17 @@ func (s subscription) handleAddUser(msg dto.WebSocketMessage) error {
 
 func (s subscription) handleDeleteRoom(msg dto.WebSocketMessage) error {
 
-	err := s.roomService.Delete(s.roomID, s.userID)
+	err := s.roomService.Delete(msg.RoomID, s.userID)
 	if err != nil {
 		return err
 	}
 
 	m := models.Message{
 		Text:     "Room deleted",
-		RoomID:   s.roomID,
+		RoomID:   msg.RoomID,
 		UserID:   s.userID,
 		Command:  models.DeleteRoom,
-		TargetID: s.roomID,
+		TargetID: msg.RoomID,
 	}
 
 	return s.broadcast(m)

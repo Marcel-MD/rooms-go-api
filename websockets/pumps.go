@@ -11,10 +11,10 @@ import (
 )
 
 func (s subscription) readPump() {
-	log.Debug().Str("user_id", s.userID).Str("room_id", s.roomID).Msg("Starting websocket read pump")
+	log.Debug().Str("user_id", s.userID).Msg("Starting websocket read pump")
 
 	defer func() {
-		log.Debug().Str("user_id", s.userID).Str("room_id", s.roomID).Msg("Stopping websocket read pump")
+		log.Debug().Str("user_id", s.userID).Msg("Stopping websocket read pump")
 		s.disconnect()
 		s.ws.Close()
 	}()
@@ -28,25 +28,25 @@ func (s subscription) readPump() {
 		err := s.ws.ReadJSON(&dto)
 		if err != nil {
 			if websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure, websocket.CloseNoStatusReceived) {
-				log.Debug().Str("user_id", s.userID).Str("room_id", s.roomID).Msg("Normal websocket close")
+				log.Debug().Str("user_id", s.userID).Msg("Normal websocket close")
 				break
 			}
 			s.writeError(err)
-			log.Err(err).Str("user_id", s.userID).Str("room_id", s.roomID).Msg("Unexpected websocket close")
+			log.Err(err).Str("user_id", s.userID).Msg("Unexpected websocket close")
 			break
 		}
 
 		err = validateMessage(dto)
 		if err != nil {
 			s.writeError(err)
-			log.Err(err).Str("user_id", s.userID).Str("room_id", s.roomID).Msg("Invalid message")
+			log.Err(err).Str("user_id", s.userID).Msg("Invalid message")
 			continue
 		}
 
 		err = s.handleMessage(dto)
 		if err != nil {
 			s.writeError(err)
-			log.Err(err).Str("user_id", s.userID).Str("room_id", s.roomID).Msg("Failed to handle message")
+			log.Err(err).Str("user_id", s.userID).Msg("Failed to handle message")
 			continue
 		}
 	}
@@ -65,16 +65,20 @@ func validateMessage(message dto.WebSocketMessage) error {
 		return errors.New("invalid message target id length")
 	}
 
+	if len(message.RoomID) < 1 || len(message.RoomID) > 50 {
+		return errors.New("invalid message room id length")
+	}
+
 	return nil
 }
 
 func (s *subscription) writePump() {
-	log.Debug().Str("user_id", s.userID).Str("room_id", s.roomID).Msg("Starting websocket write pump")
+	log.Debug().Str("user_id", s.userID).Msg("Starting websocket write pump")
 
 	ticker := time.NewTicker(pingPeriod)
 
 	defer func() {
-		log.Debug().Str("user_id", s.userID).Str("room_id", s.roomID).Msg("Stopping websocket write pump")
+		log.Debug().Str("user_id", s.userID).Msg("Stopping websocket write pump")
 		ticker.Stop()
 		s.disconnect()
 		s.ws.Close()
@@ -84,32 +88,35 @@ func (s *subscription) writePump() {
 		select {
 		case message, ok := <-s.send:
 			if !ok {
-				log.Info().Str("user_id", s.userID).Str("room_id", s.roomID).Msg("Closing websocket connection")
+				log.Info().Str("user_id", s.userID).Msg("Closing websocket connection")
 				s.write(websocket.CloseMessage, []byte{})
 				return
 			}
 
 			if message.Command == models.RemoveUser && message.TargetID == s.userID {
-				log.Info().Str("user_id", s.userID).Str("room_id", s.roomID).Msg("User left the room")
-				s.write(websocket.CloseMessage, []byte{})
-				return
+				log.Debug().Str("user_id", s.userID).Str("room_id", message.RoomID).Msg("User left the room")
+				s.removeRoom(message.RoomID)
 			}
 
-			if message.Command == models.DeleteRoom && message.TargetID == s.roomID {
-				log.Info().Str("user_id", s.userID).Str("room_id", s.roomID).Msg("Room deleted")
-				s.write(websocket.CloseMessage, []byte{})
-				return
+			if message.Command == models.AddUser && message.TargetID == s.userID {
+				log.Debug().Str("user_id", s.userID).Str("room_id", message.RoomID).Msg("User joined the room")
+				s.addRoom(message.RoomID)
+			}
+
+			if message.Command == models.DeleteRoom {
+				log.Debug().Str("user_id", s.userID).Str("room_id", message.RoomID).Msg("Room deleted")
+				s.removeRoom(message.RoomID)
 			}
 
 			if err := s.writeJSON(message); err != nil {
-				log.Err(err).Str("user_id", s.userID).Str("room_id", s.roomID).Msg("Failed to write message")
+				log.Err(err).Str("user_id", s.userID).Msg("Failed to write message")
 				s.write(websocket.CloseMessage, []byte{})
 				return
 			}
 
 		case <-ticker.C:
 			if err := s.write(websocket.PingMessage, []byte{}); err != nil {
-				log.Err(err).Str("user_id", s.userID).Str("room_id", s.roomID).Msg("Failed to write ping")
+				log.Err(err).Str("user_id", s.userID).Msg("Failed to write ping")
 				return
 			}
 		}
