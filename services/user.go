@@ -14,6 +14,7 @@ import (
 
 type IUserService interface {
 	FindAll() []models.User
+	SearchByEmail(email string) []models.User
 	FindOne(id string) (models.User, error)
 	Register(dto dto.RegisterUser) (models.User, error)
 	Login(dto dto.LoginUser) (string, error)
@@ -43,6 +44,12 @@ func (s *UserService) FindAll() []models.User {
 	log.Debug().Msg("Finding all users")
 
 	return s.Repository.FindAll()
+}
+
+func (s *UserService) SearchByEmail(email string) []models.User {
+	log.Debug().Msg("Searching for users by email")
+
+	return s.Repository.SearchByEmail(email)
 }
 
 func (s *UserService) FindOne(id string) (models.User, error) {

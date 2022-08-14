@@ -22,6 +22,7 @@ func routeUserHandler(router *gin.RouterGroup) {
 	r.POST("/register", h.register)
 	r.POST("/login", h.login)
 	r.GET("/", h.findAll)
+	r.GET("/email", h.searchByEmail)
 	r.GET("/:id", h.findOne)
 
 	p := r.Use(middleware.JwtAuth())
@@ -79,6 +80,18 @@ func (h *userHandler) current(c *gin.Context) {
 
 func (h *userHandler) findAll(c *gin.Context) {
 	users := h.service.FindAll()
+	c.JSON(http.StatusOK, users)
+}
+
+func (j *userHandler) searchByEmail(c *gin.Context) {
+	var dto dto.SearchByEmail
+	err := c.ShouldBindJSON(&dto)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	users := j.service.SearchByEmail(dto.Email)
 	c.JSON(http.StatusOK, users)
 }
 

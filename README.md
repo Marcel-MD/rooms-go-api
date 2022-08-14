@@ -38,7 +38,7 @@ For authentication are used bearer tokens.
 
   - [GET] `/:id` - Get user by ID
 
-  - [POST] `/register` - Register User
+  - [POST] `/register` - Register user
 
     ```json
     {
@@ -49,12 +49,20 @@ For authentication are used bearer tokens.
     }
     ```
 
-  - [POST] `/login` - Login User
+  - [POST] `/login` - Login user
 
     ```json
     {
       "email": "firstlast@mail.com",
       "password": "password"
+    }
+    ```
+
+  - [GET] `/email` - Search user by email
+
+    ```json
+    {
+      "email": "firstlast"
     }
     ```
 

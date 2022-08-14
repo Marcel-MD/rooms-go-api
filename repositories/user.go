@@ -10,6 +10,7 @@ import (
 
 type IUserRepository interface {
 	FindAll() []models.User
+	SearchByEmail(email string) []models.User
 	FindByID(id string) (models.User, error)
 	FindByIdWithRooms(id string) (models.User, error)
 	FindByEmail(email string) (models.User, error)
@@ -47,6 +48,12 @@ func (r *UserRepository) FindByID(id string) (models.User, error) {
 	err := r.DB.First(&user, "id = ?", id).Error
 
 	return user, err
+}
+
+func (r *UserRepository) SearchByEmail(email string) []models.User {
+	var users []models.User
+	r.DB.Where("email LIKE ?", "%"+email+"%").Find(&users)
+	return users
 }
 
 func (r *UserRepository) FindByIdWithRooms(id string) (models.User, error) {

@@ -16,3 +16,7 @@ type UpdateUser struct {
 	FirstName string `json:"firstName" binding:"required,min=3,max=50"`
 	LastName  string `json:"lastName" binding:"required,min=3,max=50"`
 }
+
+type SearchByEmail struct {
+	Email string `json:"email" binding:"required"`
+}
