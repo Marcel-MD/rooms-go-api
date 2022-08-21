@@ -1,6 +1,7 @@
 package websockets
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 
@@ -16,13 +17,15 @@ type subscription struct {
 	rooms          []string
 	pubsub         *redis.PubSub
 	ws             *websocket.Conn
+	rdb            *redis.Client
+	ctx            context.Context
 	close          chan struct{}
 	send           chan models.Message
 	messageService services.IMessageService
 	roomService    services.IRoomService
 }
 
-func connect(userID string, rooms []string, ws *websocket.Conn) (*subscription, error) {
+func connect(userID string, rooms []string, ws *websocket.Conn, rdb *redis.Client, ctx context.Context) (*subscription, error) {
 
 	pubsub := rdb.Subscribe(ctx, rooms...)
 	err := pubsub.Ping(ctx)
@@ -35,6 +38,8 @@ func connect(userID string, rooms []string, ws *websocket.Conn) (*subscription, 
 		rooms:          rooms,
 		pubsub:         pubsub,
 		ws:             ws,
+		rdb:            rdb,
+		ctx:            ctx,
 		close:          make(chan struct{}),
 		send:           make(chan models.Message),
 		messageService: services.GetMessageService(),
@@ -78,7 +83,7 @@ func (s *subscription) disconnect() error {
 		return errors.New("subscriber is not connected")
 	}
 
-	if err := s.pubsub.Unsubscribe(ctx); err != nil {
+	if err := s.pubsub.Unsubscribe(s.ctx); err != nil {
 		return err
 	}
 
@@ -96,7 +101,7 @@ func (s *subscription) disconnect() error {
 func (s *subscription) reconnect() error {
 	log.Info().Str("user_id", s.userID).Msg("User reconnecting to rooms")
 
-	if err := s.pubsub.Unsubscribe(ctx); err != nil {
+	if err := s.pubsub.Unsubscribe(s.ctx); err != nil {
 		return err
 	}
 
@@ -106,8 +111,8 @@ func (s *subscription) reconnect() error {
 
 	s.close <- struct{}{}
 
-	pubsub := rdb.Subscribe(ctx, s.rooms...)
-	err := pubsub.Ping(ctx)
+	pubsub := s.rdb.Subscribe(s.ctx, s.rooms...)
+	err := pubsub.Ping(s.ctx)
 	if err != nil {
 		return err
 	}
@@ -141,7 +146,7 @@ func (s *subscription) broadcast(message models.Message) error {
 		return err
 	}
 
-	return rdb.Publish(ctx, message.RoomID, payload).Err()
+	return s.rdb.Publish(s.ctx, message.RoomID, payload).Err()
 }
 
 func (s *subscription) broadcastGlobally(message models.Message) error {
@@ -150,5 +155,5 @@ func (s *subscription) broadcastGlobally(message models.Message) error {
 		return err
 	}
 
-	return rdb.Publish(ctx, globalChannel, payload).Err()
+	return s.rdb.Publish(s.ctx, globalChannel, payload).Err()
 }

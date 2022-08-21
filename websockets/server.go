@@ -1,11 +1,14 @@
 package websockets
 
 import (
+	"context"
 	"net/http"
 	"sync"
 	"time"
 
+	"github.com/Marcel-MD/rooms-go-api/rdb"
 	"github.com/Marcel-MD/rooms-go-api/services"
+	"github.com/go-redis/redis/v9"
 	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog/log"
 )
@@ -32,6 +35,8 @@ type IServer interface {
 
 type wsServer struct {
 	userService services.IUserService
+	rdb         *redis.Client
+	ctx         context.Context
 }
 
 var (
@@ -42,9 +47,12 @@ var (
 func GetServer() IServer {
 	serverOnce.Do(func() {
 		log.Info().Msg("Initializing websocket server")
-		initRDB()
+		rdb, ctx := rdb.GetRDB()
+
 		server = &wsServer{
 			userService: services.GetUserService(),
+			rdb:         rdb,
+			ctx:         ctx,
 		}
 	})
 	return server
@@ -72,7 +80,7 @@ func (wss *wsServer) ServeWS(w http.ResponseWriter, r *http.Request, userID stri
 
 	roomsID = append(roomsID, globalChannel)
 
-	s, err := connect(userID, roomsID, ws)
+	s, err := connect(userID, roomsID, ws, wss.rdb, wss.ctx)
 	if err != nil {
 		log.Error().Err(err).Str("user_id", userID).Msg("Failed to connect to room")
 		ws.Close()
