@@ -7,9 +7,19 @@ type RegisterUser struct {
 	Password  string `json:"password" binding:"required,min=8,max=50"`
 }
 
+type RegisterOtpUser struct {
+	RegisterUser
+	Otp string `json:"otp" binding:"required,len=6"`
+}
+
 type LoginUser struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=8,max=50"`
+}
+
+type LoginOtpUser struct {
+	LoginUser
+	Otp string `json:"otp" binding:"required,len=6"`
 }
 
 type UpdateUser struct {
@@ -19,4 +29,8 @@ type UpdateUser struct {
 
 type SearchByEmail struct {
 	Email string `json:"email" binding:"required"`
+}
+
+type Email struct {
+	Email string `json:"email" binding:"required,email"`
 }

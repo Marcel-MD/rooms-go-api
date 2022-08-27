@@ -23,9 +23,9 @@ type IMessageService interface {
 }
 
 type MessageService struct {
-	MessageRepository repositories.IMessageRepository
-	RoomRepository    repositories.IRoomRepository
-	UserRepository    repositories.IUserRepository
+	messageRepository repositories.IMessageRepository
+	roomRepository    repositories.IRoomRepository
+	userRepository    repositories.IUserRepository
 }
 
 var (
@@ -37,9 +37,9 @@ func GetMessageService() IMessageService {
 	messageOnce.Do(func() {
 		log.Info().Msg("Initializing message service")
 		messageService = &MessageService{
-			MessageRepository: repositories.GetMessageRepository(),
-			RoomRepository:    repositories.GetRoomRepository(),
-			UserRepository:    repositories.GetUserRepository(),
+			messageRepository: repositories.GetMessageRepository(),
+			roomRepository:    repositories.GetRoomRepository(),
+			userRepository:    repositories.GetUserRepository(),
 		}
 	})
 	return messageService
@@ -50,12 +50,12 @@ func (s *MessageService) FindByRoomID(roomID, userID string, params dto.MessageQ
 
 	var messages []models.Message
 
-	err := s.RoomRepository.VerifyUserInRoom(roomID, userID)
+	err := s.roomRepository.VerifyUserInRoom(roomID, userID)
 	if err != nil {
 		return messages, err
 	}
 
-	messages = s.MessageRepository.FindByRoomID(roomID, params.Page, params.Size)
+	messages = s.messageRepository.FindByRoomID(roomID, params.Page, params.Size)
 
 	return messages, nil
 }
@@ -64,12 +64,12 @@ func (s *MessageService) Create(roomID, userID string, dto dto.CreateMessage) (m
 	log.Debug().Str("room_id", roomID).Str("user_id", userID).Msg("Creating message")
 
 	var message models.Message
-	err := s.RoomRepository.VerifyUserInRoom(roomID, userID)
+	err := s.roomRepository.VerifyUserInRoom(roomID, userID)
 	if err != nil {
 		return message, err
 	}
 
-	user, err := s.UserRepository.FindByID(userID)
+	user, err := s.userRepository.FindByID(userID)
 	if err != nil {
 		return message, err
 	}
@@ -80,7 +80,7 @@ func (s *MessageService) Create(roomID, userID string, dto dto.CreateMessage) (m
 	message.Command = models.CreateMessage
 	message.TargetID = roomID
 
-	err = s.MessageRepository.Create(&message)
+	err = s.messageRepository.Create(&message)
 	if err != nil {
 		return message, err
 	}
@@ -93,7 +93,7 @@ func (s *MessageService) Create(roomID, userID string, dto dto.CreateMessage) (m
 func (s *MessageService) Update(messageID, userID string, dto dto.UpdateMessage) (models.Message, error) {
 	log.Debug().Str("id", messageID).Str("user_id", userID).Msg("Updating message")
 
-	message, err := s.MessageRepository.FindByID(messageID)
+	message, err := s.messageRepository.FindByID(messageID)
 	if err != nil {
 		return message, err
 	}
@@ -106,7 +106,7 @@ func (s *MessageService) Update(messageID, userID string, dto dto.UpdateMessage)
 	message.Command = models.UpdateMessage
 	message.TargetID = messageID
 
-	err = s.MessageRepository.Update(&message)
+	err = s.messageRepository.Update(&message)
 	if err != nil {
 		return message, err
 	}
@@ -117,7 +117,7 @@ func (s *MessageService) Update(messageID, userID string, dto dto.UpdateMessage)
 func (s *MessageService) Delete(messageID, userID string) (models.Message, error) {
 	log.Debug().Str("id", messageID).Str("user_id", userID).Msg("Deleting message")
 
-	message, err := s.MessageRepository.FindByID(messageID)
+	message, err := s.messageRepository.FindByID(messageID)
 	if err != nil {
 		return message, err
 	}
@@ -130,7 +130,7 @@ func (s *MessageService) Delete(messageID, userID string) (models.Message, error
 	message.Command = models.DeleteMessage
 	message.TargetID = messageID
 
-	err = s.MessageRepository.Update(&message)
+	err = s.messageRepository.Update(&message)
 	if err != nil {
 		return message, err
 	}
@@ -143,7 +143,7 @@ func (s *MessageService) CreateRemoveUser(roomID, removeUserID, userID string) (
 
 	var message models.Message
 
-	removeUser, err := s.UserRepository.FindByID(removeUserID)
+	removeUser, err := s.userRepository.FindByID(removeUserID)
 	if err != nil {
 		return message, err
 	}
@@ -154,7 +154,7 @@ func (s *MessageService) CreateRemoveUser(roomID, removeUserID, userID string) (
 	message.Command = models.RemoveUser
 	message.TargetID = removeUserID
 
-	err = s.MessageRepository.Create(&message)
+	err = s.messageRepository.Create(&message)
 	if err != nil {
 		return message, err
 	}
@@ -167,7 +167,7 @@ func (s *MessageService) CreateAddUser(roomID, addUserID, userID string) (models
 
 	var message models.Message
 
-	addUser, err := s.UserRepository.FindByID(addUserID)
+	addUser, err := s.userRepository.FindByID(addUserID)
 	if err != nil {
 		return message, err
 	}
@@ -178,7 +178,7 @@ func (s *MessageService) CreateAddUser(roomID, addUserID, userID string) (models
 	message.Command = models.AddUser
 	message.TargetID = addUserID
 
-	err = s.MessageRepository.Create(&message)
+	err = s.messageRepository.Create(&message)
 	if err != nil {
 		return message, err
 	}
@@ -197,7 +197,7 @@ func (s *MessageService) CreateCreateRoom(roomID, userID string) (models.Message
 	message.Command = models.CreateRoom
 	message.TargetID = roomID
 
-	err := s.MessageRepository.Create(&message)
+	err := s.messageRepository.Create(&message)
 	if err != nil {
 		return message, err
 	}
@@ -216,7 +216,7 @@ func (s *MessageService) CreateUpdateRoom(roomID, userID string) (models.Message
 	message.Command = models.UpdateRoom
 	message.TargetID = roomID
 
-	err := s.MessageRepository.Create(&message)
+	err := s.messageRepository.Create(&message)
 	if err != nil {
 		return message, err
 	}

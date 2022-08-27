@@ -17,6 +17,15 @@ TOKEN_HOUR_LIFESPAN=12
 ENVIRONMENT=dev
 ```
 
+If you want to use SMTP for one time password emails. Add your SMTP credentials:
+
+```
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+EMAIL=mail@gmail.com
+EMAIL_PASSWORD=password
+```
+
 ## Run Application with Docker
 
 More information about [Docker](https://www.docker.com/).
@@ -38,6 +47,14 @@ For authentication are used bearer tokens.
 
   - [GET] `/:id` - Get user by ID
 
+  - [POST] `/send-otp` - Send OTP email
+
+    ```json
+    {
+      "email": "firstlast@mail.com"
+    }
+    ```
+
   - [POST] `/register` - Register user
 
     ```json
@@ -49,12 +66,34 @@ For authentication are used bearer tokens.
     }
     ```
 
+  - [POST] `/register-otp` - Register user with OTP
+
+    ```json
+    {
+      "firstName": "First",
+      "lastName": "Last",
+      "email": "firstlast@mail.com",
+      "password": "password",
+      "otp": "123456"
+    }
+    ```
+
   - [POST] `/login` - Login user
 
     ```json
     {
       "email": "firstlast@mail.com",
       "password": "password"
+    }
+    ```
+
+  - [POST] `/login-otp` - Login user with OTP
+
+    ```json
+    {
+      "email": "firstlast@mail.com",
+      "password": "password",
+      "otp": "123456"
     }
     ```
 

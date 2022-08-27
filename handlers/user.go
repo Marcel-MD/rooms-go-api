@@ -20,7 +20,10 @@ func routeUserHandler(router *gin.RouterGroup) {
 
 	r := router.Group("/users")
 	r.POST("/register", h.register)
+	r.POST("/register-otp", h.registerOtp)
 	r.POST("/login", h.login)
+	r.POST("/login-otp", h.loginOtp)
+	r.POST("/send-otp", h.sendOtp)
 	r.GET("/", h.findAll)
 	r.GET("/email", h.searchByEmail)
 	r.GET("/:id", h.findOne)
@@ -48,6 +51,24 @@ func (h *userHandler) register(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
+func (h *userHandler) registerOtp(c *gin.Context) {
+
+	var dto dto.RegisterOtpUser
+	err := c.ShouldBindJSON(&dto)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	user, err := h.service.RegisterOtp(dto)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, user)
+}
+
 func (h *userHandler) login(c *gin.Context) {
 
 	var dto dto.LoginUser
@@ -64,6 +85,42 @@ func (h *userHandler) login(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"token": token})
+}
+
+func (h *userHandler) loginOtp(c *gin.Context) {
+
+	var dto dto.LoginOtpUser
+	err := c.ShouldBindJSON(&dto)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	token, err := h.service.LoginOtp(dto)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "username or password is incorrect."})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"token": token})
+}
+
+func (h *userHandler) sendOtp(c *gin.Context) {
+
+	var dto dto.Email
+	err := c.ShouldBindJSON(&dto)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err = h.service.SendOtp(dto.Email)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "otp sent"})
 }
 
 func (h *userHandler) current(c *gin.Context) {

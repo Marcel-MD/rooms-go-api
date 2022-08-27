@@ -22,8 +22,8 @@ type IRoomService interface {
 }
 
 type RoomService struct {
-	RoomRepository repositories.IRoomRepository
-	UserRepository repositories.IUserRepository
+	roomRepository repositories.IRoomRepository
+	userRepository repositories.IUserRepository
 }
 
 var (
@@ -35,8 +35,8 @@ func GetRoomService() IRoomService {
 	roomOnce.Do(func() {
 		log.Info().Msg("Initializing room service")
 		roomService = &RoomService{
-			RoomRepository: repositories.GetRoomRepository(),
-			UserRepository: repositories.GetUserRepository(),
+			roomRepository: repositories.GetRoomRepository(),
+			userRepository: repositories.GetUserRepository(),
 		}
 	})
 	return roomService
@@ -45,13 +45,13 @@ func GetRoomService() IRoomService {
 func (s *RoomService) FindAll() []models.Room {
 	log.Debug().Msg("Finding all rooms")
 
-	return s.RoomRepository.FindAll()
+	return s.roomRepository.FindAll()
 }
 
 func (s *RoomService) FindOne(id string) (models.Room, error) {
 	log.Debug().Str("id", id).Msg("Finding room")
 
-	room, err := s.RoomRepository.FindByIdWithUsers(id)
+	room, err := s.roomRepository.FindByIdWithUsers(id)
 	if err != nil {
 		return room, err
 	}
@@ -62,7 +62,7 @@ func (s *RoomService) FindOne(id string) (models.Room, error) {
 func (s *RoomService) Create(dto dto.CreateRoom, userID string) (models.Room, error) {
 	log.Debug().Str("user_id", userID).Msg("Creating room")
 
-	user, err := s.UserRepository.FindByID(userID)
+	user, err := s.userRepository.FindByID(userID)
 	if err != nil {
 		return models.Room{}, err
 	}
@@ -72,7 +72,7 @@ func (s *RoomService) Create(dto dto.CreateRoom, userID string) (models.Room, er
 		OwnerID: userID,
 	}
 
-	err = s.RoomRepository.Create(&room)
+	err = s.roomRepository.Create(&room)
 	if err != nil {
 		return room, err
 	}
@@ -88,7 +88,7 @@ func (s *RoomService) Create(dto dto.CreateRoom, userID string) (models.Room, er
 func (s *RoomService) Update(roomID, userID string, dto dto.UpdateRoom) (models.Room, error) {
 	log.Debug().Str("id", roomID).Str("user_id", userID).Msg("Updating room")
 
-	room, err := s.RoomRepository.FindByID(roomID)
+	room, err := s.roomRepository.FindByID(roomID)
 	if err != nil {
 		return room, err
 	}
@@ -99,7 +99,7 @@ func (s *RoomService) Update(roomID, userID string, dto dto.UpdateRoom) (models.
 
 	room.Name = dto.Name
 
-	err = s.RoomRepository.Update(&room)
+	err = s.roomRepository.Update(&room)
 	if err != nil {
 		return room, err
 	}
@@ -110,7 +110,7 @@ func (s *RoomService) Update(roomID, userID string, dto dto.UpdateRoom) (models.
 func (s *RoomService) Delete(roomID, userID string) error {
 	log.Debug().Str("id", roomID).Str("user_id", userID).Msg("Deleting room")
 
-	room, err := s.RoomRepository.FindByID(roomID)
+	room, err := s.roomRepository.FindByID(roomID)
 	if err != nil {
 		return err
 	}
@@ -119,7 +119,7 @@ func (s *RoomService) Delete(roomID, userID string) error {
 		return errors.New("you are not the owner of this room")
 	}
 
-	err = s.RoomRepository.Delete(&room)
+	err = s.roomRepository.Delete(&room)
 	if err != nil {
 		return err
 	}
@@ -130,12 +130,12 @@ func (s *RoomService) Delete(roomID, userID string) error {
 func (s *RoomService) AddUser(roomID, addUserID, userID string) error {
 	log.Debug().Str("id", roomID).Msg("Adding user to room")
 
-	err := s.RoomRepository.VerifyUserInRoom(roomID, addUserID)
+	err := s.roomRepository.VerifyUserInRoom(roomID, addUserID)
 	if err == nil {
 		return errors.New("user already in this room")
 	}
 
-	room, err := s.RoomRepository.FindByID(roomID)
+	room, err := s.roomRepository.FindByID(roomID)
 	if err != nil {
 		return err
 	}
@@ -144,12 +144,12 @@ func (s *RoomService) AddUser(roomID, addUserID, userID string) error {
 		return errors.New("you are not the owner of this room")
 	}
 
-	user, err := s.UserRepository.FindByID(addUserID)
+	user, err := s.userRepository.FindByID(addUserID)
 	if err != nil {
 		return err
 	}
 
-	err = s.RoomRepository.AddUser(&room, &user)
+	err = s.roomRepository.AddUser(&room, &user)
 	if err != nil {
 		return err
 	}
@@ -160,17 +160,17 @@ func (s *RoomService) AddUser(roomID, addUserID, userID string) error {
 func (s *RoomService) RemoveUser(roomID, removeUserID, userID string) error {
 	log.Debug().Str("room_id", roomID).Str("user_id", removeUserID).Msg("Removing user from room")
 
-	err := s.RoomRepository.VerifyUserInRoom(roomID, removeUserID)
+	err := s.roomRepository.VerifyUserInRoom(roomID, removeUserID)
 	if err != nil {
 		return err
 	}
 
-	room, err := s.RoomRepository.FindByID(roomID)
+	room, err := s.roomRepository.FindByID(roomID)
 	if err != nil {
 		return err
 	}
 
-	user, err := s.UserRepository.FindByID(removeUserID)
+	user, err := s.userRepository.FindByID(removeUserID)
 	if err != nil {
 		return err
 	}
@@ -183,7 +183,7 @@ func (s *RoomService) RemoveUser(roomID, removeUserID, userID string) error {
 		return errors.New("you are the owner of this room")
 	}
 
-	err = s.RoomRepository.RemoveUser(&room, &user)
+	err = s.roomRepository.RemoveUser(&room, &user)
 	if err != nil {
 		return err
 	}
@@ -193,5 +193,5 @@ func (s *RoomService) RemoveUser(roomID, removeUserID, userID string) error {
 
 func (s *RoomService) VerifyUserInRoom(roomID, userID string) error {
 	log.Debug().Str("room_id", roomID).Str("user_id", userID).Msg("Verifying user in room")
-	return s.RoomRepository.VerifyUserInRoom(roomID, userID)
+	return s.roomRepository.VerifyUserInRoom(roomID, userID)
 }
