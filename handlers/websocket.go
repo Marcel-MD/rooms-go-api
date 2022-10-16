@@ -4,20 +4,17 @@ import (
 	"net/http"
 
 	"github.com/Marcel-MD/rooms-go-api/middleware"
-	"github.com/Marcel-MD/rooms-go-api/services"
 	"github.com/Marcel-MD/rooms-go-api/websockets"
 	"github.com/gin-gonic/gin"
 )
 
 type webSocketHandler struct {
-	service services.IRoomService
-	server  websockets.IServer
+	server websockets.IServer
 }
 
 func routeWebSocketHandler(router *gin.RouterGroup) {
 	h := &webSocketHandler{
-		service: services.GetRoomService(),
-		server:  websockets.GetServer(),
+		server: websockets.GetServer(),
 	}
 
 	r := router.Group("/ws").Use(middleware.JwtAuth())

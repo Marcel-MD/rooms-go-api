@@ -4,6 +4,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/Marcel-MD/rooms-go-api/middleware"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
@@ -22,6 +23,7 @@ func InitRouter() {
 		}
 
 		r := e.Group("/api")
+		r.Use(middleware.CORS())
 
 		routeUserHandler(r)
 		routeRoomHandler(r)
