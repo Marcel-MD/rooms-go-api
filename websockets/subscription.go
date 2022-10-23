@@ -23,6 +23,7 @@ type subscription struct {
 	send           chan models.Message
 	messageService services.IMessageService
 	roomService    services.IRoomService
+	userService    services.IUserService
 }
 
 func connect(userID string, rooms []string, ws *websocket.Conn, rdb *redis.Client, ctx context.Context) (*subscription, error) {
@@ -44,9 +45,12 @@ func connect(userID string, rooms []string, ws *websocket.Conn, rdb *redis.Clien
 		send:           make(chan models.Message),
 		messageService: services.GetMessageService(),
 		roomService:    services.GetRoomService(),
+		userService:    services.GetUserService(),
 	}
 
 	go s.listen()
+
+	s.userService.SetIsOnline(userID, true)
 
 	return s, nil
 }
@@ -94,6 +98,8 @@ func (s *subscription) disconnect() error {
 	s.close <- struct{}{}
 
 	close(s.send)
+
+	s.userService.SetIsOnline(s.userID, false)
 
 	return nil
 }

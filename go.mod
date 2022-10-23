@@ -10,6 +10,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/joho/godotenv v1.4.0
+	github.com/lib/pq v1.10.7
 	github.com/rs/zerolog v1.27.0
 	golang.org/x/crypto v0.0.0-20220826181053-bd7e27e6170d
 	gorm.io/driver/postgres v1.3.9

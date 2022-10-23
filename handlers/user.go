@@ -30,7 +30,11 @@ func routeUserHandler(router *gin.RouterGroup) {
 
 	p := r.Use(middleware.JwtAuth())
 	p.GET("/current", h.current)
-	p.PUT("/", h.update)
+	p.PUT("/update", h.update)
+	p.PUT("/update-otp", h.updateOtp)
+
+	p.POST("/:id/roles/:role", h.addRole)
+	p.DELETE("/:id/roles/:role", h.removeRole)
 }
 
 func (h *userHandler) register(c *gin.Context) {
@@ -175,6 +179,53 @@ func (h *userHandler) update(c *gin.Context) {
 	}
 
 	user, err := h.service.Update(dto, userID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, user)
+}
+
+func (h *userHandler) updateOtp(c *gin.Context) {
+	userID := c.GetString("user_id")
+
+	var dto dto.UpdateOtpUser
+	err := c.ShouldBindJSON(&dto)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	user, err := h.service.UpdateOtp(dto, userID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, user)
+}
+
+func (h *userHandler) addRole(c *gin.Context) {
+	userID := c.GetString("user_id")
+	id := c.Param("id")
+	role := c.Param("role")
+
+	user, err := h.service.AddRole(id, role, userID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, user)
+}
+
+func (h *userHandler) removeRole(c *gin.Context) {
+	userID := c.GetString("user_id")
+	id := c.Param("id")
+	role := c.Param("role")
+
+	user, err := h.service.RemoveRole(id, role, userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

@@ -22,7 +22,11 @@ type IUserService interface {
 	Register(dto dto.RegisterUser) (models.User, error)
 	LoginOtp(dto dto.LoginOtpUser) (string, error)
 	Login(dto dto.LoginUser) (string, error)
+	UpdateOtp(dto dto.UpdateOtpUser, id string) (models.User, error)
 	Update(dto dto.UpdateUser, id string) (models.User, error)
+	AddRole(id string, role string, userID string) (models.User, error)
+	RemoveRole(id string, role string, userID string) (models.User, error)
+	SetIsOnline(id string, isOnline bool) (models.User, error)
 }
 
 type UserService struct {
@@ -120,7 +124,9 @@ func (s *UserService) Register(dto dto.RegisterUser) (models.User, error) {
 		FirstName: dto.FirstName,
 		LastName:  dto.LastName,
 		Email:     dto.Email,
+		Phone:     dto.Phone,
 		Password:  string(hashedPassword),
+		Roles:     []string{models.UserRole},
 	}
 
 	err = s.repository.Create(&user)
@@ -158,6 +164,17 @@ func (s *UserService) Login(dto dto.LoginUser) (string, error) {
 	return token.Generate(user.ID)
 }
 
+func (s *UserService) UpdateOtp(dto dto.UpdateOtpUser, id string) (models.User, error) {
+	log.Debug().Msg("Updating user with otp")
+
+	err := s.otpService.Verify(dto.Email, dto.Otp)
+	if err != nil {
+		return models.User{}, err
+	}
+
+	return s.Update(dto.UpdateUser, id)
+}
+
 func (s *UserService) Update(dto dto.UpdateUser, id string) (models.User, error) {
 	log.Debug().Msg("Updating user")
 
@@ -168,6 +185,8 @@ func (s *UserService) Update(dto dto.UpdateUser, id string) (models.User, error)
 
 	user.FirstName = dto.FirstName
 	user.LastName = dto.LastName
+	user.Email = dto.Email
+	user.Phone = dto.Phone
 
 	err = s.repository.Update(&user)
 	if err != nil {
@@ -175,6 +194,94 @@ func (s *UserService) Update(dto dto.UpdateUser, id string) (models.User, error)
 	}
 
 	return user, nil
+}
+
+func (s *UserService) AddRole(id string, role string, userID string) (models.User, error) {
+	log.Debug().Msg("Adding role to user")
+
+	admin, err := s.repository.FindByID(userID)
+	if err != nil {
+		return admin, err
+	}
+
+	if !admin.HasRole(models.AdminRole) {
+		return admin, errors.New("user is not admin")
+	}
+
+	user, err := s.repository.FindByID(id)
+	if err != nil {
+		return user, err
+	}
+
+	if user.HasRole(role) {
+		return user, errors.New("user already has this role")
+	}
+
+	user.Roles = append(user.Roles, role)
+
+	err = s.repository.Update(&user)
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
+}
+
+func (s *UserService) RemoveRole(id string, role string, userID string) (models.User, error) {
+	log.Debug().Msg("Removing role from user")
+
+	admin, err := s.repository.FindByID(userID)
+	if err != nil {
+		return admin, err
+	}
+
+	if !admin.HasRole(models.AdminRole) {
+		return admin, errors.New("user is not admin")
+	}
+
+	user, err := s.repository.FindByID(id)
+	if err != nil {
+		return user, err
+	}
+
+	if !user.HasRole(role) {
+		return user, errors.New("user does not have this role")
+	}
+
+	user.Roles = remove(user.Roles, role)
+
+	err = s.repository.Update(&user)
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
+}
+
+func (s *UserService) SetIsOnline(id string, isOnline bool) (models.User, error) {
+
+	user, err := s.repository.FindByID(id)
+	if err != nil {
+		return user, err
+	}
+
+	user.IsOnline = isOnline
+
+	err = s.repository.Update(&user)
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
+}
+
+func remove(s []string, r string) []string {
+	for i, v := range s {
+		if v == r {
+			return append(s[:i], s[i+1:]...)
+		}
+	}
+	return s
 }
 
 func (s *UserService) verifyPassword(password, hashedPassword string) error {

@@ -4,6 +4,7 @@ type RegisterUser struct {
 	FirstName string `json:"firstName" binding:"required,min=3,max=50"`
 	LastName  string `json:"lastName" binding:"required,min=3,max=50"`
 	Email     string `json:"email" binding:"required,email"`
+	Phone     string `json:"phone" binding:"required,min=8,max=10"`
 	Password  string `json:"password" binding:"required,min=8,max=50"`
 }
 
@@ -25,6 +26,13 @@ type LoginOtpUser struct {
 type UpdateUser struct {
 	FirstName string `json:"firstName" binding:"required,min=3,max=50"`
 	LastName  string `json:"lastName" binding:"required,min=3,max=50"`
+	Email     string `json:"email" binding:"required,email"`
+	Phone     string `json:"phone" binding:"required,min=8,max=10"`
+}
+
+type UpdateOtpUser struct {
+	UpdateUser
+	Otp string `json:"otp" binding:"required,len=6"`
 }
 
 type SearchByEmail struct {
