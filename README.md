@@ -47,6 +47,8 @@ For authentication are used bearer tokens.
 
   - [GET] `/:id` - Get user by ID
 
+  - [GET] `/current` - Get current user
+
   - [POST] `/send-otp` - Send OTP email
 
     ```json
@@ -73,6 +75,7 @@ For authentication are used bearer tokens.
       "firstName": "First",
       "lastName": "Last",
       "email": "firstlast@mail.com",
+      "phone": "123456789",
       "password": "password",
       "otp": "123456"
     }
@@ -104,6 +107,33 @@ For authentication are used bearer tokens.
       "email": "firstlast"
     }
     ```
+
+  - [PUT] `/update` - Update user
+
+    ```json
+    {
+      "firstName": "First",
+      "lastName": "Last",
+      "email": "firstlast@mail.com",
+      "phone": "123456789"
+    }
+    ```
+
+  - [PUT] `/update-otp` - Update user with OTP
+
+    ```json
+    {
+      "firstName": "First",
+      "lastName": "Last",
+      "email": "firstlast@mail.com",
+      "phone": "123456789",
+      "otp": "123456"
+    }
+    ```
+
+  - [POST] `/:id/roles/:role` - Add role to user
+
+  - [DELETE] `/:id/roles/:role` - Remove role from user
 
 - **Room** `/api/rooms`
 
