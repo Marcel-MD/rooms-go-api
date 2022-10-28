@@ -15,6 +15,7 @@ REDIS_URL=redis://:password@redis:6379/0
 API_SECRET=SecretSecretSecret
 TOKEN_HOUR_LIFESPAN=12
 ENVIRONMENT=dev
+PORT=3000
 ```
 
 If you want to use SMTP for one time password emails. Add your SMTP credentials:

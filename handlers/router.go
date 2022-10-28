@@ -30,6 +30,11 @@ func InitRouter() {
 		routeMessageHandler(r)
 		routeWebSocketHandler(r)
 
-		e.Run()
+		port := os.Getenv("PORT")
+		if port == "" {
+			port = "8080"
+		}
+
+		e.Run(":" + port)
 	})
 }
