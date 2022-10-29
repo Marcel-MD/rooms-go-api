@@ -1,36 +1,23 @@
 steps:
-  # Docker Build
+  # Build the container image
   - name: "gcr.io/cloud-builders/docker"
-    args:
-      [
-        "build",
-        "-t",
-        "europe-central2-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/myimage:$SHORT_SHA",
-        ".",
-      ]
+    args: ["build", "-t", "gcr.io/$PROJECT_ID/faf-hub:$COMMIT_SHA", "."]
 
-  # Docker push to Google Artifact Registry
+  # Push the container image to Container Registry
   - name: "gcr.io/cloud-builders/docker"
-    args:
-      [
-        "push",
-        "europe-central2-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/myimage:$SHORT_SHA",
-      ]
+    args: ["push", "gcr.io/$PROJECT_ID/faf-hub:$COMMIT_SHA"]
 
-  # Deploy to Cloud Run
-  - name: "gcr.io/cloud-builders/gcloud"
+  # Deploy container image to Cloud Run
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud
     args:
-      [
-        "run",
-        "deploy",
-        "faf-${SHORT_SHA}",
-        "--image=europe-central2-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/myimage:$SHORT_SHA",
-        "--region",
-        "europe-central2",
-        "--platform",
-        "managed",
-      ]
+      - "run"
+      - "deploy"
+      - "faf-hub"
+      - "--image"
+      - "gcr.io/$PROJECT_ID/faf-hub:$COMMIT_SHA"
+      - "--region"
+      - "europe-central2"
 
-# Store images in Google Artifact Registry
 images:
-  - europe-central2-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/myimage:$SHORT_SHA
+  - "gcr.io/$PROJECT_ID/faf-hub:$COMMIT_SHA"
