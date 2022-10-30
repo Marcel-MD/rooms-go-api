@@ -19,6 +19,7 @@ type IRoomService interface {
 	AddUser(roomID, addUserID, userID string) error
 	RemoveUser(roomID, removeUserID, userID string) error
 	VerifyUserInRoom(roomID, userID string) error
+	createDefaultRooms()
 }
 
 type RoomService struct {
@@ -38,6 +39,7 @@ func GetRoomService() IRoomService {
 			roomRepository: repositories.GetRoomRepository(),
 			userRepository: repositories.GetUserRepository(),
 		}
+		roomService.createDefaultRooms()
 	})
 	return roomService
 }
@@ -68,8 +70,9 @@ func (s *RoomService) Create(dto dto.CreateRoom, userID string) (models.Room, er
 	}
 
 	room := models.Room{
-		Name:    dto.Name,
-		OwnerID: userID,
+		Name:     dto.Name,
+		OwnerID:  userID,
+		RoomType: models.PrivateRoom,
 	}
 
 	err = s.roomRepository.Create(&room)
@@ -194,4 +197,36 @@ func (s *RoomService) RemoveUser(roomID, removeUserID, userID string) error {
 func (s *RoomService) VerifyUserInRoom(roomID, userID string) error {
 	log.Debug().Str("room_id", roomID).Str("user_id", userID).Msg("Verifying user in room")
 	return s.roomRepository.VerifyUserInRoom(roomID, userID)
+}
+
+func (s *RoomService) createDefaultRooms() {
+	_, err := s.roomRepository.FindByID(models.GeneralRoomID)
+	if err != nil {
+		generalRoom := models.Room{
+			Name:     models.GeneralRoomName,
+			OwnerID:  models.GeneralRoomID,
+			RoomType: models.PublicRoom,
+		}
+		generalRoom.ID = models.GeneralRoomID
+
+		err = s.roomRepository.Create(&generalRoom)
+		if err != nil {
+			log.Error().Err(err).Msg("Error creating general room")
+		}
+	}
+
+	_, err = s.roomRepository.FindByID(models.AnnouncementsRoomID)
+	if err != nil {
+		announcementsRoom := models.Room{
+			Name:     models.AnnouncementsRoomName,
+			OwnerID:  models.AnnouncementsRoomID,
+			RoomType: models.ReadOnlyRoom,
+		}
+		announcementsRoom.ID = models.AnnouncementsRoomID
+
+		err = s.roomRepository.Create(&announcementsRoom)
+		if err != nil {
+			log.Error().Err(err).Msg("Error creating announcements room")
+		}
+	}
 }

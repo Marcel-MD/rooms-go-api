@@ -50,7 +50,17 @@ func (s *MessageService) FindByRoomID(roomID, userID string, params dto.MessageQ
 
 	var messages []models.Message
 
-	err := s.roomRepository.VerifyUserInRoom(roomID, userID)
+	room, err := s.roomRepository.FindByID(roomID)
+	if err != nil {
+		return messages, err
+	}
+
+	user, err := s.userRepository.FindByID(userID)
+	if err != nil {
+		return messages, err
+	}
+
+	err = s.verifyIfCanRead(room, user)
 	if err != nil {
 		return messages, err
 	}
@@ -64,12 +74,18 @@ func (s *MessageService) Create(roomID, userID string, dto dto.CreateMessage) (m
 	log.Debug().Str("room_id", roomID).Str("user_id", userID).Msg("Creating message")
 
 	var message models.Message
-	err := s.roomRepository.VerifyUserInRoom(roomID, userID)
+
+	room, err := s.roomRepository.FindByID(roomID)
 	if err != nil {
 		return message, err
 	}
 
 	user, err := s.userRepository.FindByID(userID)
+	if err != nil {
+		return message, err
+	}
+
+	err = s.verifyIfCanWrite(room, user)
 	if err != nil {
 		return message, err
 	}
@@ -222,4 +238,32 @@ func (s *MessageService) CreateUpdateRoom(roomID, userID string) (models.Message
 	}
 
 	return message, nil
+}
+
+func (s *MessageService) verifyIfCanWrite(room models.Room, user models.User) error {
+	log.Debug().Str("room_id", room.ID).Str("user_id", user.ID).Msg("Verifying if user is authorized in room")
+
+	switch room.RoomType {
+	case models.PublicRoom:
+		return nil
+	case models.ReadOnlyRoom:
+		if user.HasRole(models.AdminRole) {
+			return nil
+		}
+	}
+
+	return s.roomRepository.VerifyUserInRoom(room.ID, user.ID)
+}
+
+func (s *MessageService) verifyIfCanRead(room models.Room, user models.User) error {
+	log.Debug().Str("room_id", room.ID).Str("user_id", user.ID).Msg("Verifying if user is authorized in room")
+
+	switch room.RoomType {
+	case models.PublicRoom:
+		return nil
+	case models.ReadOnlyRoom:
+		return nil
+	}
+
+	return s.roomRepository.VerifyUserInRoom(room.ID, user.ID)
 }
