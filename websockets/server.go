@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Marcel-MD/rooms-go-api/models"
 	"github.com/Marcel-MD/rooms-go-api/rdb"
 	"github.com/Marcel-MD/rooms-go-api/services"
 	"github.com/go-redis/redis/v9"
@@ -73,12 +74,14 @@ func (wss *wsServer) ServeWS(w http.ResponseWriter, r *http.Request, userID stri
 	}
 
 	rooms := user.Rooms
-	roomsID := make([]string, len(rooms)+1)
+	roomsID := make([]string, 0, len(rooms)+3)
 	for _, r := range rooms {
 		roomsID = append(roomsID, r.ID)
 	}
 
 	roomsID = append(roomsID, globalChannel)
+	roomsID = append(roomsID, models.GeneralRoomID)
+	roomsID = append(roomsID, models.AnnouncementsRoomID)
 
 	s, err := connect(userID, roomsID, ws, wss.rdb, wss.ctx)
 	if err != nil {
