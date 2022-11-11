@@ -17,7 +17,7 @@ type Message struct {
 	RoomID   string `json:"roomId"`
 	Room     Room   `json:"-" gorm:"foreignKey:RoomID"`
 	UserID   string `json:"userId"`
-	User     User   `json:"user" gorm:"foreignKey:UserID"`
+	User     User   `json:"-" gorm:"foreignKey:UserID"`
 	Text     string `json:"text"`
 	Command  string `json:"command"`
 	TargetID string `json:"targetId"`

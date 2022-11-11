@@ -15,6 +15,7 @@ import (
 type IMessageService interface {
 	FindByRoomID(roomID, userID string, params dto.MessageQueryParams) ([]models.Message, error)
 	Create(roomID, userID string, dto dto.CreateMessage) (models.Message, error)
+	CreateNoValidation(roomID, userID string, dto dto.CreateMessage) (models.Message, error)
 	Update(messageID, userID string, dto dto.UpdateMessage) (models.Message, error)
 	Delete(messageID, userID string) (models.Message, error)
 	CreateRemoveUser(roomID, removeUserID, userID string) (models.Message, error)
@@ -102,7 +103,24 @@ func (s *MessageService) Create(roomID, userID string, dto dto.CreateMessage) (m
 		return message, err
 	}
 
-	message.User = user
+	return message, nil
+}
+
+func (s *MessageService) CreateNoValidation(roomID, userID string, dto dto.CreateMessage) (models.Message, error) {
+	log.Debug().Str(logger.RoomID, roomID).Str(logger.UserID, userID).Msg("Creating message")
+
+	var message models.Message
+
+	message.Text = dto.Text
+	message.RoomID = roomID
+	message.UserID = userID
+	message.Command = models.CreateMessage
+	message.TargetID = roomID
+
+	err := s.messageRepository.Create(&message)
+	if err != nil {
+		return message, err
+	}
 
 	return message, nil
 }

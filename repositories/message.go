@@ -39,7 +39,7 @@ func (r *MessageRepository) FindByRoomID(roomID string, page, size int) []models
 	var messages []models.Message
 
 	r.DB.Scopes(models.Paginate(page, size)).Model(&models.Message{}).
-		Order("created_at desc").Preload("User").Find(&messages, "room_id = ?", roomID)
+		Order("created_at desc").Find(&messages, "room_id = ?", roomID)
 
 	return messages
 }
