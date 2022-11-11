@@ -36,12 +36,27 @@ func (s subscription) handleCreateMessage(msg dto.WebSocketMessage) error {
 		Text: msg.Text,
 	}
 
-	m, err := s.messageService.Create(msg.RoomID, s.userID, dto)
+	if err := s.verifyUserInRoom(msg.RoomID); err != nil {
+		return err
+	}
+
+	m, err := s.messageService.CreateNoValidation(msg.RoomID, s.userID, dto)
 	if err != nil {
 		return err
 	}
 
 	return s.broadcast(m)
+}
+
+func (s subscription) verifyUserInRoom(roomID string) error {
+
+	for _, room := range s.rooms {
+		if room == roomID {
+			return nil
+		}
+	}
+
+	return errors.New("user not in room")
 }
 
 func (s subscription) handleUpdateMessage(msg dto.WebSocketMessage) error {
