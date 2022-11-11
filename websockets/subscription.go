@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/Marcel-MD/rooms-go-api/logger"
 	"github.com/Marcel-MD/rooms-go-api/models"
 	"github.com/Marcel-MD/rooms-go-api/services"
 	"github.com/go-redis/redis/v9"
@@ -56,27 +57,27 @@ func connect(userID string, rooms []string, ws *websocket.Conn, rdb *redis.Clien
 }
 
 func (s *subscription) listen() {
-	log.Info().Str("user_id", s.userID).Msg("User listening to rooms")
+	log.Info().Str(logger.UserID, s.userID).Msg("User listening to rooms")
 
 	for {
 		select {
 		case msg, ok := <-s.pubsub.Channel():
 			if !ok {
-				log.Warn().Str("user_id", s.userID).Msg("Pubsub channel closed")
+				log.Warn().Str(logger.UserID, s.userID).Msg("Pubsub channel closed")
 				return
 			}
 
 			var m models.Message
 			err := json.Unmarshal([]byte(msg.Payload), &m)
 			if err != nil {
-				log.Err(err).Str("user_id", s.userID).Msg("Failed to unmarshal message")
+				log.Err(err).Str(logger.UserID, s.userID).Msg("Failed to unmarshal message")
 				continue
 			}
 
 			s.send <- m
 
 		case <-s.close:
-			log.Info().Str("user_id", s.userID).Msg("User stopped listening to rooms")
+			log.Info().Str(logger.UserID, s.userID).Msg("User stopped listening to rooms")
 			return
 		}
 	}
@@ -105,7 +106,7 @@ func (s *subscription) disconnect() error {
 }
 
 func (s *subscription) reconnect() error {
-	log.Info().Str("user_id", s.userID).Msg("User reconnecting to rooms")
+	log.Info().Str(logger.UserID, s.userID).Msg("User reconnecting to rooms")
 
 	if err := s.pubsub.Unsubscribe(s.ctx); err != nil {
 		return err

@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/Marcel-MD/rooms-go-api/dto"
+	"github.com/Marcel-MD/rooms-go-api/logger"
 	"github.com/Marcel-MD/rooms-go-api/models"
 	"github.com/Marcel-MD/rooms-go-api/repositories"
 	"github.com/rs/zerolog/log"
@@ -46,7 +47,7 @@ func GetMessageService() IMessageService {
 }
 
 func (s *MessageService) FindByRoomID(roomID, userID string, params dto.MessageQueryParams) ([]models.Message, error) {
-	log.Debug().Str("room_id", roomID).Str("user_id", userID).Msg("Finding messages")
+	log.Debug().Str(logger.RoomID, roomID).Str(logger.UserID, userID).Msg("Finding messages")
 
 	var messages []models.Message
 
@@ -71,7 +72,7 @@ func (s *MessageService) FindByRoomID(roomID, userID string, params dto.MessageQ
 }
 
 func (s *MessageService) Create(roomID, userID string, dto dto.CreateMessage) (models.Message, error) {
-	log.Debug().Str("room_id", roomID).Str("user_id", userID).Msg("Creating message")
+	log.Debug().Str(logger.RoomID, roomID).Str(logger.UserID, userID).Msg("Creating message")
 
 	var message models.Message
 
@@ -107,7 +108,7 @@ func (s *MessageService) Create(roomID, userID string, dto dto.CreateMessage) (m
 }
 
 func (s *MessageService) Update(messageID, userID string, dto dto.UpdateMessage) (models.Message, error) {
-	log.Debug().Str("id", messageID).Str("user_id", userID).Msg("Updating message")
+	log.Debug().Str(logger.MessageID, messageID).Str(logger.UserID, userID).Msg("Updating message")
 
 	message, err := s.messageRepository.FindByID(messageID)
 	if err != nil {
@@ -131,7 +132,7 @@ func (s *MessageService) Update(messageID, userID string, dto dto.UpdateMessage)
 }
 
 func (s *MessageService) Delete(messageID, userID string) (models.Message, error) {
-	log.Debug().Str("id", messageID).Str("user_id", userID).Msg("Deleting message")
+	log.Debug().Str(logger.MessageID, messageID).Str(logger.UserID, userID).Msg("Deleting message")
 
 	message, err := s.messageRepository.FindByID(messageID)
 	if err != nil {
@@ -155,7 +156,7 @@ func (s *MessageService) Delete(messageID, userID string) (models.Message, error
 }
 
 func (s *MessageService) CreateRemoveUser(roomID, removeUserID, userID string) (models.Message, error) {
-	log.Debug().Str("room_id", roomID).Str("user_id", removeUserID).Msg("Creating remove user message")
+	log.Debug().Str(logger.RoomID, roomID).Str(logger.UserID, removeUserID).Msg("Creating remove user message")
 
 	var message models.Message
 
@@ -179,7 +180,7 @@ func (s *MessageService) CreateRemoveUser(roomID, removeUserID, userID string) (
 }
 
 func (s *MessageService) CreateAddUser(roomID, addUserID, userID string) (models.Message, error) {
-	log.Debug().Str("room_id", roomID).Str("user_id", addUserID).Msg("Creating add user message")
+	log.Debug().Str(logger.RoomID, roomID).Str(logger.UserID, addUserID).Msg("Creating add user message")
 
 	var message models.Message
 
@@ -203,7 +204,7 @@ func (s *MessageService) CreateAddUser(roomID, addUserID, userID string) (models
 }
 
 func (s *MessageService) CreateCreateRoom(roomID, userID string) (models.Message, error) {
-	log.Debug().Str("room_id", roomID).Str("user_id", userID).Msg("Creating create room message")
+	log.Debug().Str(logger.RoomID, roomID).Str(logger.UserID, userID).Msg("Creating create room message")
 
 	var message models.Message
 
@@ -222,7 +223,7 @@ func (s *MessageService) CreateCreateRoom(roomID, userID string) (models.Message
 }
 
 func (s *MessageService) CreateUpdateRoom(roomID, userID string) (models.Message, error) {
-	log.Debug().Str("room_id", roomID).Str("user_id", userID).Msg("Creating update room message")
+	log.Debug().Str(logger.RoomID, roomID).Str(logger.UserID, userID).Msg("Creating update room message")
 
 	var message models.Message
 
@@ -241,7 +242,7 @@ func (s *MessageService) CreateUpdateRoom(roomID, userID string) (models.Message
 }
 
 func (s *MessageService) verifyIfCanWrite(room models.Room, user models.User) error {
-	log.Debug().Str("room_id", room.ID).Str("user_id", user.ID).Msg("Verifying if user is authorized in room")
+	log.Debug().Str(logger.RoomID, room.ID).Str(logger.UserID, user.ID).Msg("Verifying if user is authorized in room")
 
 	switch room.RoomType {
 	case models.PublicRoom:
@@ -256,7 +257,7 @@ func (s *MessageService) verifyIfCanWrite(room models.Room, user models.User) er
 }
 
 func (s *MessageService) verifyIfCanRead(room models.Room, user models.User) error {
-	log.Debug().Str("room_id", room.ID).Str("user_id", user.ID).Msg("Verifying if user is authorized in room")
+	log.Debug().Str(logger.RoomID, room.ID).Str(logger.UserID, user.ID).Msg("Verifying if user is authorized in room")
 
 	switch room.RoomType {
 	case models.PublicRoom:

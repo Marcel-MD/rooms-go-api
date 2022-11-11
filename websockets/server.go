@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Marcel-MD/rooms-go-api/logger"
 	"github.com/Marcel-MD/rooms-go-api/models"
 	"github.com/Marcel-MD/rooms-go-api/rdb"
 	"github.com/Marcel-MD/rooms-go-api/services"
@@ -60,11 +61,11 @@ func GetServer() IServer {
 }
 
 func (wss *wsServer) ServeWS(w http.ResponseWriter, r *http.Request, userID string) error {
-	log.Info().Str("user_id", userID).Msg("New websocket connection")
+	log.Info().Str(logger.UserID, userID).Msg("New websocket connection")
 
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Error().Err(err).Str("user_id", userID).Msg("Failed to upgrade websocket connection")
+		log.Error().Err(err).Str(logger.UserID, userID).Msg("Failed to upgrade websocket connection")
 		return err
 	}
 
@@ -85,7 +86,7 @@ func (wss *wsServer) ServeWS(w http.ResponseWriter, r *http.Request, userID stri
 
 	s, err := connect(userID, roomsID, ws, wss.rdb, wss.ctx)
 	if err != nil {
-		log.Error().Err(err).Str("user_id", userID).Msg("Failed to connect to room")
+		log.Error().Err(err).Str(logger.UserID, userID).Msg("Failed to connect to room")
 		ws.Close()
 		return err
 	}

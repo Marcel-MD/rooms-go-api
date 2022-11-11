@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/Marcel-MD/rooms-go-api/dto"
+	"github.com/Marcel-MD/rooms-go-api/logger"
 	"github.com/Marcel-MD/rooms-go-api/models"
 	"github.com/Marcel-MD/rooms-go-api/repositories"
 	"github.com/rs/zerolog/log"
@@ -51,7 +52,7 @@ func (s *RoomService) FindAll() []models.Room {
 }
 
 func (s *RoomService) FindOne(id string) (models.Room, error) {
-	log.Debug().Str("id", id).Msg("Finding room")
+	log.Debug().Str(logger.RoomID, id).Msg("Finding room")
 
 	room, err := s.roomRepository.FindByIdWithUsers(id)
 	if err != nil {
@@ -62,7 +63,7 @@ func (s *RoomService) FindOne(id string) (models.Room, error) {
 }
 
 func (s *RoomService) Create(dto dto.CreateRoom, userID string) (models.Room, error) {
-	log.Debug().Str("user_id", userID).Msg("Creating room")
+	log.Debug().Str(logger.UserID, userID).Msg("Creating room")
 
 	user, err := s.userRepository.FindByID(userID)
 	if err != nil {
@@ -89,7 +90,7 @@ func (s *RoomService) Create(dto dto.CreateRoom, userID string) (models.Room, er
 }
 
 func (s *RoomService) Update(roomID, userID string, dto dto.UpdateRoom) (models.Room, error) {
-	log.Debug().Str("id", roomID).Str("user_id", userID).Msg("Updating room")
+	log.Debug().Str(logger.RoomID, roomID).Str(logger.UserID, userID).Msg("Updating room")
 
 	room, err := s.roomRepository.FindByID(roomID)
 	if err != nil {
@@ -111,7 +112,7 @@ func (s *RoomService) Update(roomID, userID string, dto dto.UpdateRoom) (models.
 }
 
 func (s *RoomService) Delete(roomID, userID string) error {
-	log.Debug().Str("id", roomID).Str("user_id", userID).Msg("Deleting room")
+	log.Debug().Str(logger.RoomID, roomID).Str(logger.UserID, userID).Msg("Deleting room")
 
 	room, err := s.roomRepository.FindByID(roomID)
 	if err != nil {
@@ -131,7 +132,7 @@ func (s *RoomService) Delete(roomID, userID string) error {
 }
 
 func (s *RoomService) AddUser(roomID, addUserID, userID string) error {
-	log.Debug().Str("id", roomID).Msg("Adding user to room")
+	log.Debug().Str(logger.RoomID, roomID).Msg("Adding user to room")
 
 	err := s.roomRepository.VerifyUserInRoom(roomID, addUserID)
 	if err == nil {
@@ -161,7 +162,7 @@ func (s *RoomService) AddUser(roomID, addUserID, userID string) error {
 }
 
 func (s *RoomService) RemoveUser(roomID, removeUserID, userID string) error {
-	log.Debug().Str("room_id", roomID).Str("user_id", removeUserID).Msg("Removing user from room")
+	log.Debug().Str(logger.RoomID, roomID).Str(logger.UserID, removeUserID).Msg("Removing user from room")
 
 	err := s.roomRepository.VerifyUserInRoom(roomID, removeUserID)
 	if err != nil {
@@ -195,7 +196,7 @@ func (s *RoomService) RemoveUser(roomID, removeUserID, userID string) error {
 }
 
 func (s *RoomService) VerifyUserInRoom(roomID, userID string) error {
-	log.Debug().Str("room_id", roomID).Str("user_id", userID).Msg("Verifying user in room")
+	log.Debug().Str(logger.RoomID, roomID).Str(logger.UserID, userID).Msg("Verifying user in room")
 	return s.roomRepository.VerifyUserInRoom(roomID, userID)
 }
 
