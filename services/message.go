@@ -102,8 +102,6 @@ func (s *MessageService) Create(roomID, userID string, dto dto.CreateMessage) (m
 		return message, err
 	}
 
-	message.User = user
-
 	return message, nil
 }
 
