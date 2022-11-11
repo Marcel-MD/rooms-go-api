@@ -16,6 +16,7 @@ func InitRouter() {
 	once.Do(func() {
 		log.Info().Msg("Initializing router")
 		e := gin.Default()
+		e.Use(middleware.CORS())
 
 		env := os.Getenv("ENVIRONMENT")
 		if env == "dev" {
@@ -23,7 +24,6 @@ func InitRouter() {
 		}
 
 		r := e.Group("/api")
-		r.Use(middleware.CORS())
 
 		routeUserHandler(r)
 		routeRoomHandler(r)
