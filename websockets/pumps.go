@@ -11,7 +11,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func (s subscription) readPump() {
+func (s *subscription) readPump() {
 	log.Debug().Str(logger.UserID, s.userID).Msg("Starting websocket read pump")
 
 	defer func() {
