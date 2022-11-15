@@ -101,13 +101,7 @@ For authentication are used bearer tokens.
     }
     ```
 
-  - [GET] `/email` - Search user by email
-
-    ```json
-    {
-      "email": "firstlast"
-    }
-    ```
+  - [GET] `/email/:email` - Search user by email
 
   - [PUT] `/update` - Update user
 

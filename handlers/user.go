@@ -25,7 +25,7 @@ func routeUserHandler(router *gin.RouterGroup) {
 	r.POST("/login-otp", h.loginOtp)
 	r.POST("/send-otp", h.sendOtp)
 	r.GET("/", h.findAll)
-	r.GET("/email", h.searchByEmail)
+	r.GET("/email/:email", h.searchByEmail)
 	r.GET("/:id", h.findOne)
 
 	p := r.Use(middleware.JwtAuth())
@@ -145,14 +145,9 @@ func (h *userHandler) findAll(c *gin.Context) {
 }
 
 func (j *userHandler) searchByEmail(c *gin.Context) {
-	var dto dto.SearchByEmail
-	err := c.ShouldBindJSON(&dto)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+	email := c.Param("email")
 
-	users := j.service.SearchByEmail(dto.Email)
+	users := j.service.SearchByEmail(email)
 	c.JSON(http.StatusOK, users)
 }
 

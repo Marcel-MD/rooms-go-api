@@ -35,10 +35,6 @@ type UpdateOtpUser struct {
 	Otp string `json:"otp" binding:"required,len=6"`
 }
 
-type SearchByEmail struct {
-	Email string `json:"email" binding:"required"`
-}
-
 type Email struct {
 	Email string `json:"email" binding:"required,email"`
 }
