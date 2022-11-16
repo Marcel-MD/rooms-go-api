@@ -16,6 +16,8 @@ API_SECRET=SecretSecretSecret
 TOKEN_HOUR_LIFESPAN=12
 ENVIRONMENT=dev
 PORT=8080
+RATE_LIMIT=30
+RATE_WINDOW=1s
 ```
 
 If you want to use SMTP for one time password emails. Add your SMTP credentials:
