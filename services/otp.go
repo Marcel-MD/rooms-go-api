@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"math/rand"
+	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -19,8 +20,9 @@ type IOtpService interface {
 }
 
 type OtpService struct {
-	rdb *redis.Client
-	ctx context.Context
+	rdb    *redis.Client
+	ctx    context.Context
+	expiry time.Duration
 }
 
 var (
@@ -31,10 +33,18 @@ var (
 func GetOtpService() IOtpService {
 	otpOnce.Do(func() {
 		log.Info().Msg("Initializing otp service")
+
+		expiryStr := os.Getenv("OTP_EXPIRY")
+		expiry, err := time.ParseDuration(expiryStr)
+		if err != nil {
+			expiry = 10 * time.Minute
+		}
+
 		rdb, ctx := rdb.GetRDB()
 		otpService = &OtpService{
-			rdb: rdb,
-			ctx: ctx,
+			rdb:    rdb,
+			ctx:    ctx,
+			expiry: expiry,
 		}
 	})
 	return otpService
@@ -46,7 +56,7 @@ func (s *OtpService) Generate(email string) (string, error) {
 	num := 100000 + rand.Intn(800000)
 	otp := strconv.Itoa(num)
 
-	err := s.rdb.Set(s.ctx, email, otp, 15*time.Minute).Err()
+	err := s.rdb.Set(s.ctx, email, otp, s.expiry).Err()
 	if err != nil {
 		log.Err(err).Msg("Error setting otp in redis")
 		return "", err
@@ -66,12 +76,6 @@ func (s *OtpService) Verify(email string, otp string) error {
 
 	if otpFromRedis != otp {
 		return errors.New("otp is not valid")
-	}
-
-	err = s.rdb.Del(s.ctx, email).Err()
-	if err != nil {
-		log.Err(err).Msg("Error deleting otp from redis")
-		return err
 	}
 
 	return nil

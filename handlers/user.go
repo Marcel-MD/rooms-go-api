@@ -84,7 +84,7 @@ func (h *userHandler) login(c *gin.Context) {
 
 	token, err := h.service.Login(dto)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "username or password is incorrect."})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -102,7 +102,7 @@ func (h *userHandler) loginOtp(c *gin.Context) {
 
 	token, err := h.service.LoginOtp(dto)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "username or password is incorrect."})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 

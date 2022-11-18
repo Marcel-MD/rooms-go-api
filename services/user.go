@@ -30,9 +30,10 @@ type IUserService interface {
 }
 
 type UserService struct {
-	repository  repositories.IUserRepository
-	otpService  IOtpService
-	mailService IMailService
+	repository          repositories.IUserRepository
+	otpService          IOtpService
+	mailService         IMailService
+	loginLimiterService ILoginLimiterService
 }
 
 var (
@@ -44,9 +45,10 @@ func GetUserService() IUserService {
 	userOnce.Do(func() {
 		log.Info().Msg("Initializing user service")
 		userService = &UserService{
-			repository:  repositories.GetUserRepository(),
-			otpService:  GetOtpService(),
-			mailService: GetMailService(),
+			repository:          repositories.GetUserRepository(),
+			otpService:          GetOtpService(),
+			mailService:         GetMailService(),
+			loginLimiterService: GetLoginLimiterService(),
 		}
 	})
 	return userService
@@ -140,7 +142,12 @@ func (s *UserService) Register(dto dto.RegisterUser) (models.User, error) {
 func (s *UserService) LoginOtp(dto dto.LoginOtpUser) (string, error) {
 	log.Debug().Msg("Logging in user with otp")
 
-	err := s.otpService.Verify(dto.Email, dto.Otp)
+	err := s.loginLimiterService.IncrementAttempts(dto.Email)
+	if err != nil {
+		return "", err
+	}
+
+	err = s.otpService.Verify(dto.Email, dto.Otp)
 	if err != nil {
 		return "", err
 	}

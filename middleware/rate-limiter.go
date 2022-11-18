@@ -32,11 +32,15 @@ func RateLimiter() gin.HandlerFunc {
 		now := time.Now().UnixNano()
 		ipAddr := c.ClientIP()
 
-		client.ZRemRangeByScore(ctx, ipAddr,
-			"0",
-			fmt.Sprint(now-(window.Nanoseconds()))).Result()
+		client.ZRemRangeByScore(ctx, ipAddr, "0", fmt.Sprint(now-(window.Nanoseconds()))).Result()
 
-		reqs, _ := client.ZRange(ctx, ipAddr, 0, -1).Result()
+		reqs, err := client.ZRange(ctx, ipAddr, 0, -1).Result()
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
 
 		if len(reqs) >= limit {
 			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{
@@ -46,6 +50,7 @@ func RateLimiter() gin.HandlerFunc {
 		}
 
 		c.Next()
+
 		client.ZAddNX(ctx, ipAddr, redis.Z{Score: float64(now), Member: float64(now)})
 		client.Expire(ctx, ipAddr, window)
 	}
