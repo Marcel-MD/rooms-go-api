@@ -75,16 +75,16 @@ func (wss *wsServer) ServeWS(w http.ResponseWriter, r *http.Request, userID stri
 	}
 
 	rooms := user.Rooms
-	roomsID := make([]string, 0, len(rooms)+3)
+	roomIDs := make(map[string]bool)
 	for _, r := range rooms {
-		roomsID = append(roomsID, r.ID)
+		roomIDs[r.ID] = true
 	}
 
-	roomsID = append(roomsID, globalChannel)
-	roomsID = append(roomsID, models.GeneralRoomID)
-	roomsID = append(roomsID, models.AnnouncementsRoomID)
+	roomIDs[globalChannel] = true
+	roomIDs[models.GeneralRoomID] = true
+	roomIDs[models.AnnouncementsRoomID] = true
 
-	s, err := connect(userID, roomsID, ws, wss.rdb, wss.ctx)
+	s, err := connect(userID, roomIDs, ws, wss.rdb, wss.ctx)
 	if err != nil {
 		log.Error().Err(err).Str(logger.UserID, userID).Msg("Failed to connect to room")
 		ws.Close()

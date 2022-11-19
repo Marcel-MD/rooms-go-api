@@ -15,7 +15,7 @@ import (
 
 type subscription struct {
 	userID         string
-	rooms          []string
+	rooms          map[string]bool
 	pubsub         *redis.PubSub
 	ws             *websocket.Conn
 	rdb            *redis.Client
@@ -27,9 +27,14 @@ type subscription struct {
 	userService    services.IUserService
 }
 
-func connect(userID string, rooms []string, ws *websocket.Conn, rdb *redis.Client, ctx context.Context) (*subscription, error) {
+func connect(userID string, rooms map[string]bool, ws *websocket.Conn, rdb *redis.Client, ctx context.Context) (*subscription, error) {
 
-	pubsub := rdb.Subscribe(ctx, rooms...)
+	roomIDs := make([]string, 0, len(rooms))
+	for r := range rooms {
+		roomIDs = append(roomIDs, r)
+	}
+
+	pubsub := rdb.Subscribe(ctx, roomIDs...)
 	err := pubsub.Ping(ctx)
 	if err != nil {
 		return nil, err
@@ -118,7 +123,12 @@ func (s *subscription) reconnect() error {
 
 	s.close <- struct{}{}
 
-	pubsub := s.rdb.Subscribe(s.ctx, s.rooms...)
+	roomIDs := make([]string, 0, len(s.rooms))
+	for r := range s.rooms {
+		roomIDs = append(roomIDs, r)
+	}
+
+	pubsub := s.rdb.Subscribe(s.ctx, roomIDs...)
 	err := pubsub.Ping(s.ctx)
 	if err != nil {
 		return err
@@ -132,18 +142,12 @@ func (s *subscription) reconnect() error {
 }
 
 func (s *subscription) addRoom(room string) error {
-	s.rooms = append(s.rooms, room)
+	s.rooms[room] = true
 	return s.reconnect()
 }
 
 func (s *subscription) removeRoom(room string) error {
-	for i, r := range s.rooms {
-		if r == room {
-			s.rooms = append(s.rooms[:i], s.rooms[i+1:]...)
-			break
-		}
-	}
-
+	delete(s.rooms, room)
 	return s.reconnect()
 }
 

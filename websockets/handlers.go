@@ -50,13 +50,12 @@ func (s *subscription) handleCreateMessage(msg dto.WebSocketMessage) error {
 
 func (s *subscription) verifyUserInRoom(roomID string) error {
 
-	for _, room := range s.rooms {
-		if room == roomID {
-			return nil
-		}
+	_, ok := s.rooms[roomID]
+	if !ok {
+		return errors.New("user not in room")
 	}
 
-	return errors.New("user not in room")
+	return nil
 }
 
 func (s *subscription) handleUpdateMessage(msg dto.WebSocketMessage) error {
