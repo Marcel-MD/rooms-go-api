@@ -25,6 +25,8 @@ type LoginLimiterService struct {
 	window      time.Duration
 }
 
+const loginPrefix = "login:"
+
 var (
 	loginLimiterOnce    sync.Once
 	loginLimiterService ILoginLimiterService
@@ -61,9 +63,11 @@ func GetLoginLimiterService() ILoginLimiterService {
 func (s *LoginLimiterService) IncrementAttempts(email string) error {
 	now := time.Now().UnixNano()
 
-	s.rdb.ZRemRangeByScore(s.ctx, email, "0", fmt.Sprint(now-(s.window.Nanoseconds()))).Result()
+	emailKey := loginPrefix + email
 
-	attempts, err := s.rdb.ZRange(s.ctx, email, 0, -1).Result()
+	s.rdb.ZRemRangeByScore(s.ctx, emailKey, "0", fmt.Sprint(now-(s.window.Nanoseconds()))).Result()
+
+	attempts, err := s.rdb.ZRange(s.ctx, emailKey, 0, -1).Result()
 	if err != nil {
 		return err
 	}
@@ -74,8 +78,8 @@ func (s *LoginLimiterService) IncrementAttempts(email string) error {
 		return errors.New("too many attempts")
 	}
 
-	s.rdb.ZAddNX(s.ctx, email, redis.Z{Score: float64(now), Member: float64(now)})
-	s.rdb.Expire(s.ctx, email, s.window)
+	s.rdb.ZAddNX(s.ctx, emailKey, redis.Z{Score: float64(now), Member: float64(now)})
+	s.rdb.Expire(s.ctx, emailKey, s.window)
 
 	return nil
 }

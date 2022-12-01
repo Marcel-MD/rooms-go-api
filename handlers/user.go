@@ -25,6 +25,7 @@ func routeUserHandler(router *gin.RouterGroup) {
 	r.POST("/login-otp", h.loginOtp)
 	r.POST("/send-otp", h.sendOtp)
 	r.GET("/", h.findAll)
+	r.GET("/all", h.findAll)
 	r.GET("/email/:email", h.searchByEmail)
 	r.GET("/:id", h.findOne)
 

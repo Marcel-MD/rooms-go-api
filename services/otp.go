@@ -25,6 +25,8 @@ type OtpService struct {
 	expiry time.Duration
 }
 
+const otpPrefix = "otp:"
+
 var (
 	otpOnce    sync.Once
 	otpService IOtpService
@@ -53,10 +55,12 @@ func GetOtpService() IOtpService {
 func (s *OtpService) Generate(email string) (string, error) {
 	log.Debug().Msg("Generating otp")
 
+	emailKey := otpPrefix + email
+
 	num := 100000 + rand.Intn(800000)
 	otp := strconv.Itoa(num)
 
-	err := s.rdb.Set(s.ctx, email, otp, s.expiry).Err()
+	err := s.rdb.Set(s.ctx, emailKey, otp, s.expiry).Err()
 	if err != nil {
 		log.Err(err).Msg("Error setting otp in redis")
 		return "", err
@@ -68,7 +72,9 @@ func (s *OtpService) Generate(email string) (string, error) {
 func (s *OtpService) Verify(email string, otp string) error {
 	log.Debug().Msg("Validating otp")
 
-	otpFromRedis, err := s.rdb.Get(s.ctx, email).Result()
+	emailKey := otpPrefix + email
+
+	otpFromRedis, err := s.rdb.Get(s.ctx, emailKey).Result()
 	if err != nil {
 		log.Err(err).Msg("Error getting otp from redis")
 		return err
