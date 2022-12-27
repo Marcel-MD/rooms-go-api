@@ -3,7 +3,23 @@
 ## Description
 
 Multi-room chat application developed with [Gin](https://gin-gonic.com/), [GORM](https://gorm.io/index.html), [Go Redis](https://redis.uptrace.dev/) and [Gorilla WebSocket](https://pkg.go.dev/github.com/gorilla/websocket).
-Work in progress...
+
+## Deployment on Google Cloud
+
+![Deployment Diagram](https://github.com/Marcel-MD/rooms-go-api/blob/main/deployment.png)
+
+Server is deployed on [Google Cloud](https://cloud.google.com/) using **Cloud Run** and can scale to multiple instances. **Memorystore (Redis)** is primary used for it's **pubsub** feature to broadcast messages to all server instances. It's also used for storing temporary data like one time passwords, login attempts and rate limiting. **Cloud SQL** is used for storing persistent data like users, rooms and messages. **Cloud Build** is used for building and deploying the application.
+
+## Database Schema
+
+![Database Schema](https://github.com/Marcel-MD/rooms-go-api/blob/main/db-schema.png)
+
+## Components Diagram
+
+![Components Diagram](https://github.com/Marcel-MD/rooms-go-api/blob/main/components.png)
+
+This component diagram gives a general representation of how the backend’s main components depend on each other. For the server was chosen, a layered architecture which gives enough structure without being overly complicated. The three main layers are Handlers, Services, and Repositories. Handlers and
+Web sockets receive requests from the front end application. Services hold all the business logic. Repositories are responsible for data persistence in our PostgreSQL database. And Redis is used for its pubsub feature that allows to connect and send messages between a lot of clients. Redis is also used for storing temporary passwords as well as IP addresses for DDoS protection.
 
 ## Environment Variables
 
