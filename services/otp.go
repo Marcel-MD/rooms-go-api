@@ -36,6 +36,8 @@ func GetOtpService() IOtpService {
 	otpOnce.Do(func() {
 		log.Info().Msg("Initializing otp service")
 
+		rand.Seed(time.Now().UnixNano())
+
 		expiryStr := os.Getenv("OTP_EXPIRY")
 		expiry, err := time.ParseDuration(expiryStr)
 		if err != nil {

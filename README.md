@@ -44,6 +44,7 @@ OTP_EXPIRY=10m
 If you want to use SMTP for one time password emails. Add your SMTP credentials:
 
 ```
+SENDER_NAME=Rooms 💬
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 EMAIL=mail@gmail.com

@@ -10,10 +10,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-const (
-	senderName = "Rooms 💬"
-)
-
 type Mail struct {
 	To      []string
 	Subject string
@@ -25,9 +21,10 @@ type IMailService interface {
 }
 
 type MailService struct {
-	from string
-	addr string
-	auth smtp.Auth
+	senderName string
+	from       string
+	addr       string
+	auth       smtp.Auth
 }
 
 var (
@@ -39,6 +36,7 @@ func GetMailService() IMailService {
 	mailOnce.Do(func() {
 		log.Info().Msg("Initializing mail service")
 
+		senderName := os.Getenv("SENDER_NAME")
 		email := os.Getenv("EMAIL")
 		password := os.Getenv("EMAIL_PASSWORD")
 		smtpHost := os.Getenv("SMTP_HOST")
@@ -46,10 +44,13 @@ func GetMailService() IMailService {
 		addr := smtpHost + ":" + smtpPort
 		auth := smtp.PlainAuth("", email, password, smtpHost)
 
+		log.Info().Str("senderName", senderName).Msg("Mail service initialized")
+
 		mailService = &MailService{
-			from: email,
-			addr: addr,
-			auth: auth,
+			from:       email,
+			addr:       addr,
+			auth:       auth,
+			senderName: senderName,
 		}
 	})
 	return mailService
@@ -67,7 +68,7 @@ func (s *MailService) Send(mail Mail) {
 
 func (s *MailService) buildMail(mail Mail) []byte {
 	msg := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\r\n"
-	msg += fmt.Sprintf("From: %s\r\n", senderName)
+	msg += fmt.Sprintf("From: %s\r\n", s.senderName)
 	msg += fmt.Sprintf("To: %s\r\n", strings.Join(mail.To, ";"))
 	msg += fmt.Sprintf("Subject: %s\r\n", mail.Subject)
 	msg += fmt.Sprintf("\r\n%s\r\n", mail.Body)
