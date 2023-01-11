@@ -10,10 +10,6 @@ Multi-room chat application developed with [Gin](https://gin-gonic.com/), [GORM]
 
 Server is deployed on [Google Cloud](https://cloud.google.com/) using **Cloud Run** and can scale to multiple instances. **Memorystore (Redis)** is primary used for it's **pubsub** feature to broadcast messages to all server instances. It's also used for storing temporary data like one time passwords, login attempts and rate limiting. **Cloud SQL** is used for storing persistent data like users, rooms and messages. **Cloud Build** is used for building and deploying the application.
 
-## Database Schema
-
-![Database Schema](https://github.com/Marcel-MD/rooms-go-api/blob/main/db-schema.png)
-
 ## Components Diagram
 
 ![Components Diagram](https://github.com/Marcel-MD/rooms-go-api/blob/main/components.png)
