@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"fmt"
+	"os"
 	"sync"
 
 	"github.com/Marcel-MD/rooms-go-api/dto"
@@ -30,10 +31,12 @@ type IUserService interface {
 }
 
 type UserService struct {
-	repository          repositories.IUserRepository
-	otpService          IOtpService
-	mailService         IMailService
-	loginLimiterService ILoginLimiterService
+	repository            repositories.IUserRepository
+	allowedUserRepository repositories.IAllowedUserRepository
+	otpService            IOtpService
+	mailService           IMailService
+	loginLimiterService   ILoginLimiterService
+	allowedUsersOnly      bool
 }
 
 var (
@@ -44,12 +47,20 @@ var (
 func GetUserService() IUserService {
 	userOnce.Do(func() {
 		log.Info().Msg("Initializing user service")
-		userService = &UserService{
-			repository:          repositories.GetUserRepository(),
-			otpService:          GetOtpService(),
-			mailService:         GetMailService(),
-			loginLimiterService: GetLoginLimiterService(),
+		us := &UserService{
+			repository:            repositories.GetUserRepository(),
+			allowedUserRepository: repositories.GetAllowedUserRepository(),
+			otpService:            GetOtpService(),
+			mailService:           GetMailService(),
+			loginLimiterService:   GetLoginLimiterService(),
 		}
+
+		allowedUsersOnly := os.Getenv("ALLOWED_USERS_ONLY")
+		if allowedUsersOnly == "true" {
+			us.allowedUsersOnly = true
+		}
+
+		userService = us
 	})
 	return userService
 }
@@ -79,6 +90,13 @@ func (s *UserService) FindOne(id string) (models.User, error) {
 
 func (s *UserService) SendOtp(email string) error {
 	log.Debug().Msg("Sending otp")
+
+	if s.allowedUsersOnly {
+		_, err := s.allowedUserRepository.FindByEmail(email)
+		if err != nil {
+			return errors.New("user not allowed")
+		}
+	}
 
 	otp, err := s.otpService.Generate(email)
 	if err != nil {
@@ -129,6 +147,15 @@ func (s *UserService) Register(dto dto.RegisterUser) (models.User, error) {
 		Phone:     dto.Phone,
 		Password:  string(hashedPassword),
 		Roles:     []string{models.UserRole},
+	}
+
+	if s.allowedUsersOnly {
+		allowedUser, err := s.allowedUserRepository.FindByEmail(dto.Email)
+		if err != nil {
+			return user, errors.New("user not allowed")
+		}
+
+		user.Roles = append(user.Roles, allowedUser.DefaultRole)
 	}
 
 	err = s.repository.Create(&user)

@@ -32,6 +32,7 @@ func initDB() *gorm.DB {
 	db.AutoMigrate(&User{})
 	db.AutoMigrate(&Room{})
 	db.AutoMigrate(&Message{})
+	db.AutoMigrate(&AllowedUser{})
 
 	return db
 }
